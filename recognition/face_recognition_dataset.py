@@ -9,7 +9,7 @@ from torch.utils.data.dataset import Dataset
 
 
 class FaceRecognitionDataset(Dataset):
-    path_to_pretrained_model = "../models/shape_predictor_68_face_landmarks.dat"
+    path_to_pretrained_model = "models/shape_predictor_68_face_landmarks.dat"
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(path_to_pretrained_model)
     aligner = openface.AlignDlib(path_to_pretrained_model)

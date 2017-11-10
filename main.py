@@ -1,6 +1,11 @@
+import os
+import glob
 import cv2
 
-from recognition.data_set import FaceRecognitionDataset
+from recognition.face_recognition_dataset import FaceRecognitionDataset
 
-image = cv2.imread("data/lfw/Gerry_Adams/Gerry_Adams_0002.jpg")
-rect = FaceRecognitionDataset.detector(image, 1)[0]
+files = glob.glob("data/lfw/**/*.jpg")
+for file in files:
+    print(file)
+    image = cv2.imread(file)
+    rect = FaceRecognitionDataset.detector(image, 1)[0]

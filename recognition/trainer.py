@@ -3,7 +3,7 @@ from torch.autograd import Variable
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 
-from recognition.data_set import FaceRecognitionDataset
+from recognition.face_recognition_dataset import FaceRecognitionDataset
 from recognition.net import Net
 
 faces_image_path = "../data/lfw/"
