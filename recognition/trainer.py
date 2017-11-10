@@ -1,6 +1,6 @@
 import torch.nn as nn
 from torch.autograd import Variable
-from torch.optim import SGD
+from torch.optim import Adam
 from torch.utils.data import DataLoader
 
 from recognition.data_set import FaceRecognitionDataset
@@ -12,12 +12,13 @@ dataloader = DataLoader(dataset, batch_size=64, shuffle=True, num_workers=6)
 net = Net(len(dataset.names))
 net = nn.DataParallel(net).cuda()
 criterion = nn.CrossEntropyLoss()
-optimizer = SGD(net.parameters(), lr=0.001)
+optimizer = Adam(net.parameters(), lr=0.001)
 epochs = 1000
-for epoch in epochs:
+running_loss = 0
+for epoch in range(epochs):
     for i, data in enumerate(dataloader, 0):
         inputs, labels = data
-        inputs, labels = Variable(inputs), Variable(labels)
+        inputs, labels = Variable(inputs).cuda(), Variable(labels).cuda()
         optimizer.zero_grad()
         outputs = net(inputs)
         loss = criterion(outputs, labels)
@@ -28,3 +29,5 @@ for epoch in epochs:
             print('[%d, %5d] loss: %.3f' %
                   (epoch + 1, i + 1, running_loss / 2000))
             running_loss = 0.0
+        print("batch finished")
+    print("epoch finished")

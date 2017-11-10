@@ -18,7 +18,7 @@ class FaceRecognitionDataset(Dataset):
         self.root_path = root_path
         paths = [os.path.join(root_path, path) for path in os.listdir(root_path)]
         self.names = [path[path.rfind("/") + 1:] for path in paths]
-        temp = [os.listdir(path) for path in paths]
+        temp = [[os.path.join(path, t) for t in os.listdir(path)] for path in paths]
         self.faces = [item for sublist in temp for item in sublist]
 
     def __len__(self):
@@ -28,12 +28,14 @@ class FaceRecognitionDataset(Dataset):
         face = self.faces[index]
         name = face[face.rfind("/") + 1:]
         name = name[:name.rfind("_")]
+        print(face)
         image = cv2.imread(face)
         rect = FaceRecognitionDataset.detector(image, 1)[0]
-        aligned = FaceRecognitionDataset.aligner.align(400, image, rect)
+        aligned = FaceRecognitionDataset.aligner.align(299, image, rect)
         aligned = np.swapaxes(aligned, 0, 2)
-        aligned = np.swapaxes(aligned, 0, 1)
+        aligned = np.swapaxes(aligned, 1, 2)
         x = torch.from_numpy(aligned)
-        y = torch.zeros(1, len(self.names))
-        y[0, self.names.index(name)] = 1
-        return {"x": x, "y": y}
+        # y = torch.zeros(len(self.names))
+        # y[self.names.index(name)] = 1
+        # return x.float(), y.long()
+        return x.float(), self.names.index(name)
