@@ -13,7 +13,7 @@ from evm.evm import EVM
 X, y = load_digits(return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 tails = [50, 100, 200, 500, 750, 1000]
-best_error = 100
+best_accuracy = 0
 best_model = None
 print("number of training samples = {}, obviously choosing a small tail will yield a very bad result".format(X_train.shape[0]))
 for tail in tails:
@@ -23,8 +23,9 @@ for tail in tails:
     evm.fit(X_train, y_train)
     result = evm.predict(X_test)
     err = ((result != y_test).sum() / X_test.shape[0]) * 100
-    if err < best_error:
+    acc = 100 - err
+    if acc > best_accuracy:
         best_model = evm
-        best_error = err
-    print("tail = {}, error = {}".format(tail, err))
-print("best error = {}".format(best_error))
+        best_accuracy = acc
+    print("tail = {}, accuracy = {}%".format(tail, acc))
+print("best accuracy = {}%".format(best_accuracy))
