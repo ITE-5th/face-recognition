@@ -21,47 +21,13 @@ class EVM:
             self.classes[i] = X[y == i]
         self._infer()
 
-    def predict(self, X):
-        return np.apply_along_axis(self._predict_row, 1, X)
-
-    def _predict_row_generalized(self, row):
-        result = []
-        for i in range(len(self.dists)):
-            clz, dist = self.classes[i], self.dists[i]
-            res = 0
-            for j in range(dist.shape[0]):
-                distance = np.linalg.norm(clz[j] - row)
-                res += dist[j].w_score(distance)
-            result.append(res / dist.shape[0])
-        m = max(result)
-        # -1 if from another class
-        return result.index(m) if m >= self.threshold else -1
-
-    def _predict_row(self, row):
-        max_prop = 0
-        max_class = -1
-        for i in range(len(self.dists)):
-            clz, dist = self.classes[i], self.dists[i]
-            for j in range(dist.shape[0]):
-                distance = np.linalg.norm(clz[j] - row)
-                prop = dist[j].w_score(distance)
-                if prop > max_prop:
-                    max_prop = prop
-                    max_class = i
-        return max_class if max_prop >= self.threshold else -1
-
     def _infer(self):
         for i in range(len(self.classes)):
             self._infer_class(i)
 
     def _infer_class(self, class_index):
         in_class = self.classes[class_index]
-        out_class = []
-        for i in range(len(self.classes)):
-            if i != class_index:
-                for row in self.classes[i]:
-                    out_class.append(row)
-        out_class = np.array(out_class)
+        out_class = np.concatenate([self.classes[i] for i in range(len(self.classes)) if i != class_index])
         distances = cdist(in_class, out_class)
         distances.sort(axis=1)
         distances = 0.5 * distances[:, :self.tail_size]
@@ -71,3 +37,31 @@ class EVM:
         mr = libmr.MR()
         mr.fit_low(row, self.tail_size)
         return mr
+
+    def predict(self, X):
+        return np.apply_along_axis(self._predict_row, 1, X)
+
+    def _predict_row_generalized(self, row):
+        result = []
+        for i in range(len(self.dists)):
+            clz, dist = self.classes[i], self.dists[i]
+            distances = np.linalg.norm(clz - row, axis=1, keepdims=True)
+            result.append(sum(dist[j].w_score(distances[j]) for j in range(dist.shape[0])) / dist.shape[0])
+        m = max(result)
+        # -1 if from another class
+        return result.index(m) if m >= self.threshold else -1
+
+    def _predict_row(self, row):
+        max_prop = 0
+        max_class = -1
+        # row = row.reshape(1, -1)
+        for i in range(len(self.dists)):
+            clz, dist = self.classes[i], self.dists[i]
+            distances = np.linalg.norm(clz - row, axis=1, keepdims=True)
+            props = [dist[j].w_score(distances[j]) for j in range(dist.shape[0])]
+            prop = max(props)
+            if prop > max_prop:
+                max_prop = prop
+                max_class = i
+        # -1 if from another class
+        return max_class if max_prop >= self.threshold else -1
