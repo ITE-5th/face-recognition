@@ -7,7 +7,6 @@ from scipy.spatial.distance import cdist
 class EVM:
     def __init__(self, tail_size: int = 100, threshold=0.75, with_reduction=False, redundancy_rate=0.5):
         self.tail_size = tail_size
-        self.X = None
         self.classes = []
         self.dists = []
         self.threshold = threshold
@@ -15,7 +14,6 @@ class EVM:
         self.with_reduction = with_reduction
 
     def fit(self, X, y):
-        self.X = X
         max_class = y.max()
         self.classes = [0] * (max_class + 1)
         self.dists = [0] * (max_class + 1)
