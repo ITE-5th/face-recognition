@@ -2,6 +2,17 @@ import torch
 from torch.autograd import Function
 
 
+class L2Norm(torch.nn.Module):
+    def __init__(self, scaling_factor):
+        super(L2Norm, self).__init__()
+        self.scaling_factor = scaling_factor
+        self.l2func = L2Normalization()
+
+    def forward(self, x):
+        x = self.l2func(x, self.scaling_factor)
+        return x
+
+
 class L2Normalization(Function):
     def forward(self, input_data, scaling_factor):
         # compute L2Norm for pixels in channels
