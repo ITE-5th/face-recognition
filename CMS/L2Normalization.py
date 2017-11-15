@@ -3,16 +3,16 @@ from torch.autograd import Function
 
 
 class L2Norm(torch.nn.Module):
-    def __init__(self, scaling_factor_size):
+    def __init__(self, scaling_factor):
         super(L2Norm, self).__init__()
         # create learn-able parameters
-        self.scaling_factor = torch.nn.Parameter(torch.rand(scaling_factor_size))
+        self.scaling_factor = torch.nn.Parameter(scaling_factor)
         # L2Norm Function
-        self.l2nfunc = L2NormalizationFunc
+        self.l2n_func = L2NormalizationFunc
 
     def forward(self, x):
         # apply L2Norm function
-        x = self.l2nfunc(x, self.scaling_factor)
+        x = self.l2n_func(x, self.scaling_factor)
         return x
 
 
