@@ -2,6 +2,7 @@ import libmr
 
 import numpy as np
 from scipy.spatial.distance import cdist
+from multiprocessing import Pool, cpu_count
 
 
 class EVM:
@@ -24,8 +25,12 @@ class EVM:
             self._reduce()
 
     def _infer(self):
-        for i in range(len(self.classes)):
-            self._infer_class(i)
+        with Pool(cpu_count()) as p:
+            self.dists = p.map(self._infer_class, range(len(self.classes)))
+            p.close()
+            p.join()
+        # for i in range(len(self.classes)):
+        #     self._infer_class(i)
 
     def _infer_class(self, class_index):
         in_class = self.classes[class_index]
@@ -33,7 +38,8 @@ class EVM:
         distances = cdist(in_class, out_class)
         distances.sort(axis=1)
         distances = 0.5 * distances[:, :self.tail_size]
-        self.dists[class_index] = np.apply_along_axis(self._fit_weibull, 1, distances)
+        # self.dists[class_index] = np.apply_along_axis(self._fit_weibull, 1, distances)
+        return np.apply_along_axis(self._fit_weibull, 1, distances)
 
     def _fit_weibull(self, row):
         mr = libmr.MR()
@@ -41,8 +47,10 @@ class EVM:
         return mr
 
     def _reduce(self):
-        for i in range(len(self.classes)):
-            self._reduce_class(i)
+        with Pool(cpu_count()) as p:
+            p.map(self._reduce_class, range(len(self.classes)))
+            p.close()
+            p.join()
 
     def _reduce_class(self, class_index):
         clz, dist = self.classes[class_index], self.dists[class_index]
