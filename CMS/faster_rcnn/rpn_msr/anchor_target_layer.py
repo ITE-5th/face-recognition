@@ -7,10 +7,11 @@
 
 import numpy as np
 import numpy.random as npr
-from CMS.RPN.utils.cython_bbox import bbox_overlaps, bbox_intersections
+from CMS.faster_rcnn.utils.cython_bbox import bbox_overlaps, bbox_intersections
 
-from CMS.RPN.fast_rcnn.config import cfg
-from CMS.RPN.rpn_msr.generate_anchors import generate_anchors
+from CMS.faster_rcnn.fast_rcnn.config import cfg
+from CMS.faster_rcnn.rpn_msr.generate_anchors import generate_anchors
+# <<<< obsolete
 from ..fast_rcnn.bbox_transform import bbox_transform
 
 DEBUG = False
@@ -47,10 +48,10 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_i
         print('anchors:')
         print(_anchors)
         print('anchor shapes:')
-        print(np.hstack((
+        print((np.hstack((
             _anchors[:, 2::4] - _anchors[:, 0::4],
             _anchors[:, 3::4] - _anchors[:, 1::4],
-        )))
+        ))))
         _counts = cfg.EPS
         _sums = np.zeros((1, 4))
         _squared_sums = np.zeros((1, 4))
@@ -239,9 +240,12 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_i
     bbox_outside_weights = _unmap(bbox_outside_weights, total_anchors, inds_inside, fill=0)
 
     if DEBUG:
-        print('rpn: max max_overlap', np.max(max_overlaps))
-        print('rpn: num_positive', np.sum(labels == 1))
-        print('rpn: num_negative', np.sum(labels == 0))
+        print()
+        'rpn: max max_overlap', np.max(max_overlaps)
+        print()
+        'rpn: num_positive', np.sum(labels == 1)
+        print()
+        'rpn: num_negative', np.sum(labels == 0)
         _fg_sum += np.sum(labels == 1)
         _bg_sum += np.sum(labels == 0)
         _count += 1
