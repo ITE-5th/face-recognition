@@ -5,20 +5,18 @@
 # Written by Sergey Karayev
 # --------------------------------------------------------
 
-cimport cython
+
 import numpy as np
-cimport numpy as np
 
 DTYPE = np.float
-ctypedef np.float_t DTYPE_t
 
-def bbox_overlaps(np.ndarray[DTYPE_t, ndim=2] boxes,
-        np.ndarray[DTYPE_t, ndim=2] query_boxes):
+def bbox_overlaps(np.ndarray[np.float_, ndim=2] boxes,
+        np.ndarray[np.float_, ndim=2] query_boxes):
     return bbox_overlaps_c(boxes, query_boxes)
 
-cdef np.ndarray[DTYPE_t, ndim=2] bbox_overlaps_c(
-        np.ndarray[DTYPE_t, ndim=2] boxes,
-        np.ndarray[DTYPE_t, ndim=2] query_boxes):
+cdef np.ndarray[np.float_, ndim=2] bbox_overlaps_c(
+        np.ndarray[np.float_, ndim=2] boxes,
+        np.ndarray[np.float_, ndim=2] query_boxes):
     """
     Parameters
     ----------
@@ -30,9 +28,9 @@ cdef np.ndarray[DTYPE_t, ndim=2] bbox_overlaps_c(
     """
     cdef unsigned int N = boxes.shape[0]
     cdef unsigned int K = query_boxes.shape[0]
-    cdef np.ndarray[DTYPE_t, ndim=2] overlaps = np.zeros((N, K), dtype=DTYPE)
-    cdef DTYPE_t iw, ih, box_area
-    cdef DTYPE_t ua
+    cdef np.ndarray[np.float_, ndim=2] overlaps = np.zeros((N, K), dtype=DTYPE)
+    cdef np.float_ iw, ih, box_area
+    cdef np.float_ ua
     cdef unsigned int k, n
     for k in range(K):
         box_area = (
@@ -60,14 +58,14 @@ cdef np.ndarray[DTYPE_t, ndim=2] bbox_overlaps_c(
 
 
 def bbox_intersections(
-        np.ndarray[DTYPE_t, ndim=2] boxes,
-        np.ndarray[DTYPE_t, ndim=2] query_boxes):
+        np.ndarray[np.float_, ndim=2] boxes,
+        np.ndarray[np.float_, ndim=2] query_boxes):
     return bbox_intersections_c(boxes, query_boxes)
 
 
-cdef np.ndarray[DTYPE_t, ndim=2] bbox_intersections_c(
-        np.ndarray[DTYPE_t, ndim=2] boxes,
-        np.ndarray[DTYPE_t, ndim=2] query_boxes):
+cdef np.ndarray[np.float_, ndim=2] bbox_intersections_c(
+        np.ndarray[np.float_, ndim=2] boxes,
+        np.ndarray[np.float_, ndim=2] query_boxes):
     """
     For each query box compute the intersection ratio covered by boxes
     ----------
@@ -81,9 +79,9 @@ cdef np.ndarray[DTYPE_t, ndim=2] bbox_intersections_c(
     """
     cdef unsigned int N = boxes.shape[0]
     cdef unsigned int K = query_boxes.shape[0]
-    cdef np.ndarray[DTYPE_t, ndim=2] intersec = np.zeros((N, K), dtype=DTYPE)
-    cdef DTYPE_t iw, ih, box_area
-    cdef DTYPE_t ua
+    cdef np.ndarray[np.float_, ndim=2] intersec = np.zeros((N, K), dtype=DTYPE)
+    cdef np.float_ iw, ih, box_area
+    cdef np.float_ ua
     cdef unsigned int k, n
     for k in range(K):
         box_area = (
