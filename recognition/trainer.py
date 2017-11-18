@@ -8,7 +8,7 @@ from recognition.net import Net
 
 faces_image_path = "../data/lfw/"
 dataset = FaceRecognitionDataset(faces_image_path)
-dataloader = DataLoader(dataset, batch_size=64, shuffle=True, num_workers=6)
+dataloader = DataLoader(dataset, batch_size=64, shuffle=True, num_workers=8)
 net = Net(len(dataset.names))
 net = nn.DataParallel(net).cuda()
 criterion = nn.CrossEntropyLoss()
@@ -31,3 +31,4 @@ for epoch in range(epochs):
             running_loss = 0.0
         print("batch finished")
     print("epoch finished")
+

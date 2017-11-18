@@ -3,7 +3,7 @@ import torch.nn.functional as F
 
 from recognition.inceptionresnetv2 import inceptionresnetv2
 
-path_of_pretrained_model = "../models/inceptionresnetv2.pth"
+path_of_pretrained_model = "../data/inceptionresnetv2.pth"
 extractor = inceptionresnetv2(path_of_pretrained_model).cuda()
 for param in extractor.parameters():
     param.requires_grad = False
