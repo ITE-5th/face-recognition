@@ -8,7 +8,7 @@ class L2Norm(torch.nn.Module):
         # create learn-able parameters
         self.scaling_factor = torch.nn.Parameter(torch.FloatTensor(scaling_factor))
         # L2Norm Function
-        self.l2n_func = L2NormalizationFunc()
+        self.l2n_func = L2NormFunc()
 
     def forward(self, x):
         # apply L2Norm function
@@ -16,23 +16,29 @@ class L2Norm(torch.nn.Module):
         return x
 
 
-class L2NormalizationFunc(Function):
+class L2NormFunc(Function):
     def forward(self, input_data, scaling_factor):
         # compute L2Norm for pixels in channels
-        denominator = input_data.view(input_data.size()[0], -1, 3).abs().sum(1).sqrt()
+        bs, c, _, _ = input_data.size()
+        denominator = input_data.view(bs, c, -1).abs().sum(2).sqrt()
 
-        x_bar = torch.div(input_data, denominator.view(1, 1, -1).exapnd_as(input_data))
+        x_bar = input_data.div(
+            denominator.view(bs, c, 1, 1).expand_as(input_data))
 
         # normalize the pixels and multiply by scaling_factor
-        y = x_bar * scaling_factor.view(1, 1, -1).expand_as(x_bar)
+        y = x_bar * scaling_factor.view(1, c, 1, 1).expand_as(x_bar)
 
-        self.save_for_backward(input_data, scaling_factor, x_bar, denominator, y)
+        self.scaling_factor = scaling_factor
+        self.input_data = input_data
+        self.x_bar = x_bar
+        self.denominator = denominator
+        self.y = y
 
         return y
 
     def backward(self, grad_output):
         # restore the values
-        input_data, scaling_factor, x_bar, denominator, y = self.saved_variables
+        input_data, scaling_factor, x_bar, denominator, y = self.input_data, self.scaling_factor, self.x_bar, self.denominator, self.y
 
         # element-wise multiplication -> sum elements in every channel
         grad_scaling_factor = torch.FloatTensor(scaling_factor.shape)

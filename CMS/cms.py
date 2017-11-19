@@ -112,7 +112,7 @@ class CMSRCNN(nn.Module):
         self.rpn = RPN()
 
         c = 512
-        self.l2norm_rpn_1 = L2Norm([66.84] * c)
+        self.l2norm_rpn_1 = L2Norm([66.84] * 256)
         self.l2norm_rpn_2 = L2Norm([94.52] * c)
         self.l2norm_rpn_3 = L2Norm([94.52] * c)
 
@@ -157,16 +157,17 @@ class CMSRCNN(nn.Module):
         # region RPN
 
         # 2x pooling
-        # x1_rpn = self.l2norm_rpn_1(self.pool(self.pool(x1)))
+        x1_rpn = self.l2norm_rpn_1(self.pool(x1_rpn))
         # 1x pooling
-        # x2_rpn = self.l2norm_rpn_2(self.pool(x2))
+        x2_rpn = self.l2norm_rpn_2(x2_rpn)
         # 0x pooling
-        # x3_rpn = self.l2norm_rpn_3(x3)
+        x3_rpn = self.l2norm_rpn_3(x3)
         # x1_rpn = self.pool4(self.pool3(x1))
         # x1_rpn = self.pool3(x1)
         # x2_rpn = self.pool5(x1)
-        x1_rpn = self.pool(x1_rpn)
-        x3_rpn = x3
+
+        # x1_rpn = self.pool(x1_rpn)
+        # x3_rpn = x3
 
         temp = torch.cat((x1_rpn, x2_rpn, x3_rpn), 1)
         # temp = torch.cat((temp, x3_rpn), 1)
