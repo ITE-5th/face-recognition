@@ -5,17 +5,14 @@
 # Written by Ross Girshick and Sean Bell
 # --------------------------------------------------------
 
-import yaml
 import numpy as np
 import numpy.random as npr
-import pdb
 
-from ..utils.cython_bbox import bbox_overlaps, bbox_intersections
-
+from fast_rcnn.bbox_transform import bbox_transform
 # TODO: make fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
-from ..fast_rcnn.config import cfg
-from ..fast_rcnn.bbox_transform import bbox_transform
+from fast_rcnn.config import cfg
+from utils.cython_bbox import bbox_overlaps, bbox_intersections
 
 # <<<< obsolete
 
@@ -62,8 +59,7 @@ def proposal_target_layer(rpn_rois, gt_boxes, gt_ishard, dontcare_areas, _num_cl
     """
     jittered_gt_boxes = _jitter_gt_boxes(gt_easyboxes)
     zeros = np.zeros((gt_easyboxes.shape[0] * 2, 1), dtype=gt_easyboxes.dtype)
-    all_rois = np.vstack((all_rois, \
-                          np.hstack((zeros, np.vstack((gt_easyboxes[:, :-1], jittered_gt_boxes[:, :-1]))))))
+    all_rois = np.vstack((all_rois, np.hstack((zeros, np.vstack((gt_easyboxes[:, :-1], jittered_gt_boxes[:, :-1]))))))
 
     # Sanity check: single batch only
     assert np.all(all_rois[:, 0] == 0), \

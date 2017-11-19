@@ -6,9 +6,9 @@ class L2Norm(torch.nn.Module):
     def __init__(self, scaling_factor):
         super(L2Norm, self).__init__()
         # create learn-able parameters
-        self.scaling_factor = torch.nn.Parameter(scaling_factor)
+        self.scaling_factor = torch.nn.Parameter(torch.FloatTensor(scaling_factor))
         # L2Norm Function
-        self.l2n_func = L2NormalizationFunc
+        self.l2n_func = L2NormalizationFunc()
 
     def forward(self, x):
         # apply L2Norm function
@@ -19,7 +19,7 @@ class L2Norm(torch.nn.Module):
 class L2NormalizationFunc(Function):
     def forward(self, input_data, scaling_factor):
         # compute L2Norm for pixels in channels
-        denominator = input_data.view(-1, 3).abs().sum(1).sqrt()
+        denominator = input_data.view(input_data.size()[0], -1, 3).abs().sum(1).sqrt()
 
         x_bar = torch.div(input_data, denominator.view(1, 1, -1).exapnd_as(input_data))
 
