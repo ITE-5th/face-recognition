@@ -7,13 +7,10 @@ class L2Norm(torch.nn.Module):
         super(L2Norm, self).__init__()
         # create learn-able parameters
         self.scaling_factor = torch.nn.Parameter(torch.FloatTensor(scaling_factor))
-        # L2Norm Function
-        self.l2n_func = L2NormFunc()
 
     def forward(self, x):
         # apply L2Norm function
-        x = self.l2n_func(x, self.scaling_factor)
-        return x
+        return L2NormFunc()(x, self.scaling_factor)
 
 
 class L2NormFunc(Function):
@@ -28,11 +25,13 @@ class L2NormFunc(Function):
         # normalize the pixels and multiply by scaling_factor
         y = x_bar * scaling_factor.view(1, c, 1, 1).expand_as(x_bar)
 
-        self.scaling_factor = scaling_factor
-        self.input_data = input_data
-        self.x_bar = x_bar
-        self.denominator = denominator
-        self.y = y
+        # TODO: uncomment the next lines
+        # commented 'cuz of low gpu memory
+        # self.scaling_factor = scaling_factor
+        # self.input_data = input_data
+        # self.x_bar = x_bar
+        # self.denominator = denominator
+        # self.y = y
 
         return y
 

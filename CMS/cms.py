@@ -71,7 +71,7 @@ class CMSRCNN(nn.Module):
             self.conv_a2,
             # nn.ReLU(),
             self.conv_b2,
-            nn.ReLU(),
+            # nn.ReLU(),
             # self.pool,
             nn.MaxPool2d(2),
 
@@ -116,18 +116,17 @@ class CMSRCNN(nn.Module):
         self.l2norm_rpn_2 = L2Norm([94.52] * c)
         self.l2norm_rpn_3 = L2Norm([94.52] * c)
 
-        self.l2norm_faces_1 = L2Norm([57.75] * c)
+        self.l2norm_faces_1 = L2Norm([57.75] * 256)
         self.l2norm_faces_2 = L2Norm([81.67] * c)
         self.l2norm_faces_3 = L2Norm([81.67] * c)
 
-        self.l2norm_bodies_1 = L2Norm([57.75] * c)
+        self.l2norm_bodies_1 = L2Norm([57.75] * 256)
         self.l2norm_bodies_2 = L2Norm([81.67] * c)
         self.l2norm_bodies_3 = L2Norm([81.67] * c)
 
-        # TODO: remove or keep padding??
-        self.conv1x1_rpn = nn.Conv2d(1280, 512, kernel_size=(1, 1))
-        self.conv1x1_faces = nn.Conv2d(512 * 3, 512 * 7 * 7, kernel_size=(1, 1), stride=(1, 1), padding=(1, 1))
-        self.conv1x1_bodies = nn.Conv2d(512 * 3, 512 * 7 * 7, kernel_size=(1, 1), stride=(1, 1), padding=(1, 1))
+        self.conv1x1_rpn = nn.Conv2d(1280, 512, 1)
+        self.conv1x1_faces = nn.Conv2d(1280, 512, 1)
+        self.conv1x1_bodies = nn.Conv2d(1280, 512, 1)
 
         # TODO: correct parameters
         self.roi_pool1 = RoIPool(7, 7, 1.0 / 16)
@@ -135,7 +134,7 @@ class CMSRCNN(nn.Module):
         self.roi_pool3 = RoIPool(7, 7, 1.0 / 16)
 
         self.fc1 = FC(512 * 7 * 7, 4096)
-        self.fc2 = FC(4096, 4096)
+        self.fc2 = FC(512 * 7 * 7, 4096)
         self.score_fc = FC(4096, 2, relu=False)
         self.bbox_fc = FC(4096, 4, relu=False)
 
@@ -162,16 +161,10 @@ class CMSRCNN(nn.Module):
         x2_rpn = self.l2norm_rpn_2(x2_rpn)
         # 0x pooling
         x3_rpn = self.l2norm_rpn_3(x3)
-        # x1_rpn = self.pool4(self.pool3(x1))
-        # x1_rpn = self.pool3(x1)
-        # x2_rpn = self.pool5(x1)
 
-        # x1_rpn = self.pool(x1_rpn)
-        # x3_rpn = x3
+        rpn_input = self.conv1x1_rpn(torch.cat((x1_rpn, x2_rpn, x3_rpn), 1))
+        # del temp, x1_rpn, x2_rpn, x3_rpn
 
-        temp = torch.cat((x1_rpn, x2_rpn, x3_rpn), 1)
-        # temp = torch.cat((temp, x3_rpn), 1)
-        rpn_input = self.conv1x1_rpn(temp)
         rois = self.rpn(rpn_input, im_info, gt_boxes, gt_ishard, dontcare_areas)
 
         if self.training:
@@ -181,30 +174,38 @@ class CMSRCNN(nn.Module):
         # endregion
 
         # project into feature maps
-        face1, body1 = self.project_into_feature_maps(x1, rois, im_info)
+        face, body = self.project_into_feature_maps(x1, rois, im_info)
         face2, body2 = self.project_into_feature_maps(x2, rois, im_info)
         face3, body3 = self.project_into_feature_maps(x3, rois, im_info)
 
-        # TODO: add dropout layer?
-        bodies = torch.cat((self.l2norm_bodies_1(self.roi_pool1(body1, rois)),
-                            self.l2norm_bodies_2(self.roi_pool2(body2, rois)),
-                            self.l2norm_bodies_3(self.roi_pool(body3, rois))), 0)
-        # bodies = self.l2norm_fc_1(bodies)
-        bodies = self.conv1x1_bodies(bodies)
-        bodies = bodies.view(bodies.size()[0], -1)
+        x1_rpn = self.roi_pool1(x1, body)
+        x2_rpn = self.roi_pool2(x2, body2)
+        x3_rpn = self.roi_pool3(x3, body3)
 
         # TODO: add dropout layer?
-        faces = torch.cat((self.l2norm_faces_1(self.roi_pool1(face1, rois)),
-                           self.l2norm_faces_2(self.roi_pool2(face2, rois)),
-                           self.l2norm_faces_3(face3)), 0)
+        body = torch.cat((self.l2norm_bodies_1(x1_rpn),
+                          self.l2norm_bodies_2(x2_rpn),
+                          self.l2norm_bodies_3(x3_rpn)), 1)
+        del x1_rpn, x2_rpn, x3_rpn, body2, body3
+        # body = self.l2norm_fc_1(body)
+        body = self.conv1x1_bodies(body)
+        body = body.view(body.size()[0], -1)
+
+        # TODO: add dropout layer?
+        face = torch.cat((self.l2norm_faces_1(self.roi_pool1(x1, face)),
+                          self.l2norm_faces_2(self.roi_pool2(x2, face2)),
+                          self.l2norm_faces_3(self.roi_pool3(x3, face3))), 1)
+        del face2, face3
+        import gc
+        gc.collect()
         # faces = self.l2norm_fc_2(faces)
-        faces = self.conv1x1_faces(faces)
-        faces = faces.view(faces.size()[0], -1)
+        face = self.conv1x1_faces(face)
+        face = face.view(face.size()[0], -1)
 
         # TODO: add dropout layer?
-        temp = torch.cat((self.fc1(bodies), self.fc2(faces)), 0)
-        scores = F.softmax(self.scores_fc(temp))
-        bbox_pred = self.bbox_fc(temp)
+        face = torch.cat((self.fc1(body), self.fc2(face)), 0)
+        scores = F.softmax(self.scores_fc(face))
+        bbox_pred = self.bbox_fc(face)
 
         if self.training:
             self.cross_entropy, self.loss_box = self.build_loss(scores, bbox_pred, roi_data)
@@ -395,7 +396,7 @@ class CMSRCNN(nn.Module):
         tx, ty, tw, th = 1, 1, 1, 1
 
         _, _, w, h = feature_maps.size()
-        _, bboxes = rois[0], rois[1:]
+        bboxes = rois
 
         # calculate the width and height of the face's bbox
         face_width = bboxes[:, 3] - bboxes[:, 1]
@@ -413,9 +414,9 @@ class CMSRCNN(nn.Module):
         # faces
         # bboxes[0::2] = max(min(bboxes[0::2] / r1, w), 0)
         # bboxes[1::2] = max(min(bboxes[1::2] / r2, h), 0)
-        bboxes.data[:, 2::2] = bboxes.data[:, 2::2] / r1
-        bboxes.data[:, 1::2] = bboxes.data[:, 1::2] / r2
-        bboxes = bboxes.clamp(min=0)
+        bboxes.data[:, 1::2] = torch.clamp(torch.round(bboxes.data[:, 1::2] / r1), max=w - 1, min=0)
+        bboxes.data[:, 2::2] = torch.clamp(torch.round(bboxes.data[:, 2::2] / r2), max=h - 1, min=0)
+        # bboxes = bboxes.clamp(min=0)
 
         # bodies
         b_bboxes = torch.autograd.Variable(torch.zeros(bboxes.size()))
@@ -427,17 +428,21 @@ class CMSRCNN(nn.Module):
         body_center_y = face_height * ty + face_center_y
 
         # calculate bbox points
-        b_bboxes[:, 1] = body_center_x - body_width / 2
-        b_bboxes[:, 3] = body_center_x + body_width / 2
+        b_bboxes[:, 1] = torch.clamp(torch.round(body_center_x - body_width / 2), max=w - 1, min=0)
+        b_bboxes[:, 3] = torch.clamp(torch.round(body_center_x + body_width / 2), max=w - 1, min=0)
 
-        b_bboxes[:, 2] = body_center_y - body_height / 2
-        b_bboxes[:, 4] = body_center_y - body_height / 2
-        b_bboxes = b_bboxes.clamp(min=0)
+        b_bboxes[:, 2] = torch.clamp(torch.round(body_center_y - body_height / 2), max=h - 1, min=0)
+        b_bboxes[:, 4] = torch.clamp(torch.round(body_center_y + body_height / 2), max=h - 1, min=0)
+        # b_bboxes = b_bboxes.clamp(min=0)
 
         # b_bboxes[0::2] = max(min(tx * face_width + face_center_x, w), 0)
         # b_bboxes[1::2] = max(min(ty * face_height + face_center_y, h), 0)
 
         # return feature_maps[:, bboxes[0]:bboxes[2], bboxes[1]: bboxes[3]], \
         #             feature_maps[:, b_bboxes[0]:b_bboxes[2],b_bboxes[1]: b_bboxes[3]]
+
+        if rois.is_cuda:
+            bboxes = bboxes.cuda()
+            b_bboxes = b_bboxes.cuda()
 
         return bboxes, b_bboxes
