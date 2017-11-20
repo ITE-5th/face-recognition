@@ -29,6 +29,8 @@ class CMSRCNN(nn.Module):
     PIXEL_MEANS = np.array([[[102.9801, 115.9465, 122.7717]]])
     SCALES = (600,)
     MAX_SIZE = 1000
+    n_classes = 2
+    classes = np.asarray(['__background__', 'face'])
 
     def __init__(self):
         super(CMSRCNN, self).__init__()
@@ -40,16 +42,7 @@ class CMSRCNN(nn.Module):
         # remove classifier layers
         # self.vgg = nn.Sequential(*(vgg_face._modules['{}'.format(i)] for i in range(31)))
 
-        # define RPN layer
-        # self.rpn = RPN(vgg=self.vgg)
-
-        # self.pool = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2), dilation=(1, 1))
         self.pool = nn.MaxPool2d(2)
-        # self.pool1 = nn.MaxPool2d(2)
-        # self.pool2 = nn.MaxPool2d(2)
-        # self.pool3 = nn.MaxPool2d(4)
-        # self.pool4 = nn.MaxPool2d(2)
-        # self.pool5 = nn.MaxPool2d(2)
 
         self.conv_a1 = nn.Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
         self.conv_b1 = nn.Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
@@ -62,25 +55,18 @@ class CMSRCNN(nn.Module):
         self.conv_c3 = nn.Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
         self.seq1 = nn.Sequential(
+
             self.conv_a1,
-            # nn.ReLU(),
             self.conv_b1,
-            # nn.ReLU(),
             nn.MaxPool2d(2),
 
             self.conv_a2,
-            # nn.ReLU(),
             self.conv_b2,
-            # nn.ReLU(),
-            # self.pool,
             nn.MaxPool2d(2),
 
             self.conv_a3,
-            # nn.ReLU(),
             self.conv_b3,
-            # nn.ReLU(),
             self.conv_c3,
-            # nn.ReLU()
         )
 
         self.conv_a4 = nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
@@ -89,11 +75,8 @@ class CMSRCNN(nn.Module):
 
         self.seq2 = nn.Sequential(
             self.conv_a4,
-            # nn.ReLU(),
             self.conv_b4,
-            # nn.ReLU(),
             self.conv_c4,
-            # nn.ReLU()
         )
 
         self.conv_a5 = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
@@ -102,11 +85,8 @@ class CMSRCNN(nn.Module):
 
         self.seq3 = nn.Sequential(
             self.conv_a5,
-            # nn.ReLU(),
             self.conv_b5,
-            # nn.ReLU(),
             self.conv_c5,
-            # nn.ReLU()
         )
 
         self.rpn = RPN()
@@ -135,8 +115,8 @@ class CMSRCNN(nn.Module):
 
         self.fc1 = FC(512 * 7 * 7, 4096)
         self.fc2 = FC(512 * 7 * 7, 4096)
-        self.score_fc = FC(4096, 2, relu=False)
-        self.bbox_fc = FC(4096, 4, relu=False)
+        self.score_fc = FC(4096 * 2, self.n_classes, relu=False)
+        self.bbox_fc = FC(4096 * 2, self.n_classes * 4, relu=False)
 
         self.cross_entropy = None
         self.loss_box = None
@@ -186,8 +166,7 @@ class CMSRCNN(nn.Module):
         body = torch.cat((self.l2norm_bodies_1(x1_rpn),
                           self.l2norm_bodies_2(x2_rpn),
                           self.l2norm_bodies_3(x3_rpn)), 1)
-        del x1_rpn, x2_rpn, x3_rpn, body2, body3
-        # body = self.l2norm_fc_1(body)
+
         body = self.conv1x1_bodies(body)
         body = body.view(body.size()[0], -1)
 
@@ -195,22 +174,20 @@ class CMSRCNN(nn.Module):
         face = torch.cat((self.l2norm_faces_1(self.roi_pool1(x1, face)),
                           self.l2norm_faces_2(self.roi_pool2(x2, face2)),
                           self.l2norm_faces_3(self.roi_pool3(x3, face3))), 1)
-        del face2, face3
-        import gc
-        gc.collect()
+
         # faces = self.l2norm_fc_2(faces)
         face = self.conv1x1_faces(face)
         face = face.view(face.size()[0], -1)
 
         # TODO: add dropout layer?
-        face = torch.cat((self.fc1(body), self.fc2(face)), 0)
-        scores = F.softmax(self.scores_fc(face))
+        face = torch.cat((self.fc1(body), self.fc2(face)), 1)
+        cls_prob = F.softmax(self.score_fc(face))
         bbox_pred = self.bbox_fc(face)
 
         if self.training:
-            self.cross_entropy, self.loss_box = self.build_loss(scores, bbox_pred, roi_data)
+            self.cross_entropy, self.loss_box = self.build_loss(cls_prob, bbox_pred, roi_data)
 
-        return scores, bbox_pred, rois
+        return cls_prob, bbox_pred, rois
 
     @property
     def loss(self):
