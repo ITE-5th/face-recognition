@@ -72,6 +72,5 @@ venv.bak/
 /site
 unused/
 /CMS/Functions/
-CMS/main.py
 CMS/vgg-face-download.py
 Excluded Data/
