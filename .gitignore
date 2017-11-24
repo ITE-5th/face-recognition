@@ -70,3 +70,8 @@ venv.bak/
 
 # mkdocs documentation
 /site
+unused/
+/CMS/Functions/
+CMS/main.py
+CMS/vgg-face-download.py
+Excluded Data/
