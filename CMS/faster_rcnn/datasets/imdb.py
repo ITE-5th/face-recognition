@@ -11,11 +11,10 @@ import PIL
 import numpy as np
 import scipy.sparse
 
-
-# TODO: make fast_rcnn irrelevant
+# TODO: make CMS.faster_rcnn.fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
 from utils.cython_bbox import bbox_overlaps
-from fast_rcnn.config import cfg
+from ..fast_rcnn.config import cfg
 
 # <<<< obsolete
 

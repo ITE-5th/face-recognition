@@ -8,10 +8,10 @@
 import numpy as np
 import numpy.random as npr
 
-from fast_rcnn.bbox_transform import bbox_transform
-# TODO: make fast_rcnn irrelevant
+from ..fast_rcnn.bbox_transform import bbox_transform
+# TODO: make CMS.faster_rcnn.fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
-from fast_rcnn.config import cfg
+from ..fast_rcnn.config import cfg
 from utils.cython_bbox import bbox_overlaps, bbox_intersections
 
 # <<<< obsolete
@@ -194,7 +194,7 @@ def _get_bbox_regression_labels(bbox_target_data, num_classes):
     compact form N x (class, tx, ty, tw, th)
 
     This function expands those targets into the 4-of-4*K representation used
-    by the network (i.e. only one class has non-zero targets).
+    by the .faster_rcnn.network (i.e. only one class has non-zero targets).
 
     Returns:
         bbox_target (ndarray): N x 4K blob of regression targets

@@ -1,17 +1,16 @@
 import os
-import torch
-import cv2
 import pickle
+
+import cv2
 import numpy as np
 
-from .faster_rcnn import network
-from .faster_rcnn.faster_rcnn import FasterRCNN, RPN
-from .faster_rcnn.utils.timer import Timer
-from .faster_rcnn.fast_rcnn.nms_wrapper import nms
-
-from .faster_rcnn.fast_rcnn.bbox_transform import bbox_transform_inv, clip_boxes
-from .faster_rcnn.datasets.factory import get_imdb
-from .faster_rcnn.fast_rcnn.config import cfg, cfg_from_file, get_output_dir
+from CMS.faster_rcnn import network
+from CMS.faster_rcnn.datasets.factory import get_imdb
+from CMS.faster_rcnn.fast_rcnn.bbox_transform import bbox_transform_inv, clip_boxes
+from CMS.faster_rcnn.fast_rcnn.config import cfg, cfg_from_file, get_output_dir
+from CMS.faster_rcnn.fast_rcnn.nms_wrapper import nms
+from CMS.faster_rcnn.faster_rcnn import FasterRCNN
+from CMS.faster_rcnn.utils.timer import Timer
 
 # hyper-parameters
 # ------------
@@ -81,7 +80,7 @@ def im_detect(net, image):
 
 
 def test_net(name, net, imdb, max_per_image=300, thresh=0.05, vis=False):
-    """Test a Fast R-CNN network on an image database."""
+    """Test a Fast R-CNN .faster_rcnn.network on an image database."""
     num_images = len(imdb.image_index)
     # all detections are collected into:
     #    all_boxes[cls][image] = N x 5 array of detections in

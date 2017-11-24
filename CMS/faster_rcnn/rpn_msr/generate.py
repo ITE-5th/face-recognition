@@ -9,9 +9,9 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-# TODO: make fast_rcnn irrelevant
+# TODO: make CMS.faster_rcnn.fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
-from fast_rcnn.config import cfg
+from ..fast_rcnn.config import cfg
 from utils.blob import im_list_to_blob
 from utils.timer import Timer
 
@@ -54,7 +54,7 @@ def _vis_proposals(im, dets, thresh=0.5):
 
 
 def _get_image_blob(im):
-    """Converts an image into a network input.
+    """Converts an image into a .faster_rcnn.network input.
 
     Arguments:
         im (ndarray): a color image in BGR order

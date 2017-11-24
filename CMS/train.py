@@ -4,13 +4,13 @@ from datetime import datetime
 import numpy as np
 import torch
 
-import network
-from cms import CMSRCNN
-from datasets.factory import get_imdb
-from fast_rcnn.config import cfg, cfg_from_file
-from roi_data_layer import roidb as rdl_roidb
-from roi_data_layer.layer import RoIDataLayer
-from utils.timer import Timer
+from CMS.cms import CMSRCNN
+from CMS.faster_rcnn import network
+from CMS.faster_rcnn.datasets.factory import get_imdb
+from CMS.faster_rcnn.fast_rcnn.config import cfg, cfg_from_file
+from CMS.faster_rcnn.roi_data_layer import roidb as rdl_roidb
+from CMS.faster_rcnn.roi_data_layer.layer import RoIDataLayer
+from CMS.faster_rcnn.utils.timer import Timer
 
 try:
     from termcolor import cprint
@@ -70,14 +70,14 @@ data_layer = RoIDataLayer(roidb, imdb.num_classes)
 # load net
 net = CMSRCNN()
 network.weights_normal_init(net, dev=0.01)
-network.load_pretrained_npy(net, pretrained_model)
-# model_file = '/media/longc/Data/models/VGGnet_fast_rcnn_iter_70000.h5'
+network.load_pretrained_npy(net,
+                            pretrained_model)  # model_file = '/media/longc/Data/models/VGGnet_fast_rcnn_iter_70000.h5'
 # model_file = 'models/saved_model3/faster_rcnn_60000.h5'
-# network.load_net(model_file, net)
+# .faster_rcnn.  network.load_net(model_file, net)
 # exp_name = 'vgg16_02-19_13-24'
 # start_step = 60001
 # lr /= 10.
-# network.weights_normal_init([net.bbox_fc, net.score_fc, net.fc6, net.fc7], dev=0.01)
+# .faster_rcnn.  network.weights_normal_init([net.bbox_fc, net.score_fc, net.fc6, net.fc7], dev=0.01)
 
 net.cuda()
 net.train()

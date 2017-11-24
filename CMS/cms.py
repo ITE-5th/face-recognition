@@ -4,16 +4,15 @@ import torch.nn as nn
 import torch.nn.functional as F
 from cv2 import cv2
 
-# from CMS.RPN.RPN import RPN
+from CMS.Modules.L2Norm import L2Norm
 from CMS.faster_rcnn import network
+from CMS.faster_rcnn.fast_rcnn.bbox_transform import bbox_transform_inv, clip_boxes
+from CMS.faster_rcnn.fast_rcnn.nms_wrapper import nms
 from CMS.faster_rcnn.faster_rcnn import FasterRCNN, RPN
-from Modules.L2Norm import L2Norm
-from fast_rcnn.bbox_transform import bbox_transform_inv, clip_boxes
-from fast_rcnn.nms_wrapper import nms
-from network import FC
-from roi_pooling.modules.roi_pool import RoIPool
-from rpn_msr.proposal_target_layer import proposal_target_layer as proposal_target_layer_py
-from utils.blob import im_list_to_blob
+from CMS.faster_rcnn.roi_pooling.modules.roi_pool import RoIPool
+from CMS.faster_rcnn.rpn_msr.proposal_target_layer import proposal_target_layer as proposal_target_layer_py
+from CMS.faster_rcnn.utils.blob import im_list_to_blob
+from CMS.faster_rcnn.network import FC
 
 
 def nms_detections(pred_boxes, scores, nms_thresh, inds=None):
@@ -299,7 +298,7 @@ class CMSRCNN(nn.Module):
         return blob, np.array(im_scale_factors)
 
     def get_image_blob(self, im):
-        """Converts an image into a network input.
+        """Converts an image into a  network input.
         Arguments:
             im (ndarray): a color image in BGR order
         Returns:

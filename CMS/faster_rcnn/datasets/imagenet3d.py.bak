@@ -13,9 +13,9 @@ from .imdb import ROOT_DIR
 from utils.cython_bbox import bbox_overlaps
 from utils.boxes_grid import get_boxes_grid
 
-# TODO: make fast_rcnn irrelevant
+# TODO: make CMS.faster_rcnn.fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
-from fast_rcnn.config import cfg
+from ..fast_rcnn.config import cfg
 from rpn_msr.generate_anchors import generate_anchors
 # <<<< obsolete
 
@@ -312,16 +312,16 @@ class imagenet3d(imdb):
         if self._image_set != 'test':
             gt_roidb = self.gt_roidb()
 
-            print 'Loading region proposal network boxes...'
+            print 'Loading region proposal  network boxes...'
             model = cfg.REGION_PROPOSAL
             rpn_roidb = self._load_rpn_roidb(gt_roidb, model)
-            print 'Region proposal network boxes loaded'
+            print 'Region proposal  network boxes loaded'
             roidb = imdb.merge_roidbs(rpn_roidb, gt_roidb)
         else:
-            print 'Loading region proposal network boxes...'
+            print 'Loading region proposal  network boxes...'
             model = cfg.REGION_PROPOSAL
             roidb = self._load_rpn_roidb(None, model)
-            print 'Region proposal network boxes loaded'
+            print 'Region proposal  network boxes loaded'
 
         print '{} region proposals per image'.format(self._num_boxes_proposal / len(self.image_index))
 

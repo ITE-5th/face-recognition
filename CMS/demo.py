@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-from cms import CMSRCNN
-from faster_rcnn.utils.timer import Timer
+from CMS.cms import CMSRCNN
+from CMS.faster_rcnn.utils.timer import Timer
 
 
 def test():

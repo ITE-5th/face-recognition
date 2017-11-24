@@ -5,16 +5,16 @@
 # Written by Ross Girshick
 # --------------------------------------------------------
 
-"""The data layer used during training to train a Fast R-CNN network.
+"""The data layer used during training to train a Fast R-CNN .faster_rcnn.network.
 
 RoIDataLayer implements a Caffe Python layer.
 """
 
 import numpy as np
 
-# TODO: make fast_rcnn irrelevant
+# TODO: make CMS.faster_rcnn.fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
-from fast_rcnn.config import cfg
+from ..fast_rcnn.config import cfg
 # <<<< obsolete
 from roi_data_layer.minibatch import get_minibatch
 

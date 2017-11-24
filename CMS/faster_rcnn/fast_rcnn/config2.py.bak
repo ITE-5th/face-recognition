@@ -25,10 +25,10 @@ from easydict import EasyDict as edict
 
 __C = edict()
 # Consumers can get config by:
-#   from fast_rcnn_config import cfg
+#   from CMS.faster_rcnn.fast_rcnn_config import cfg
 cfg = __C
 
-# region proposal network (RPN) or not
+# region proposal  network (RPN) or not
 __C.IS_RPN = True
 
 # multiscale training and testing
@@ -235,7 +235,7 @@ __C.GPU_ID = 0
 def get_output_dir(imdb, net):
     """Return the directory where experimental artifacts are placed.
 
-    A canonical path is built using the name from an imdb and a network
+    A canonical path is built using the name from an imdb and a  network
     (if not None).
     """
     path = osp.abspath(osp.join(__C.ROOT_DIR, 'output', __C.EXP_DIR, imdb.name))

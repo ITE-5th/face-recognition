@@ -12,7 +12,7 @@ import numpy as np
 
 
 def im_list_to_blob(ims):
-    """Convert a list of images into a network input.
+    """Convert a list of images into a .faster_rcnn. .faster_rcnn.network input.
 
     Assumes images are already prepared (means subtracted, BGR order, ...).
     """
