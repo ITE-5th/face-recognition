@@ -11,9 +11,9 @@ import numpy as np
 
 # TODO: make fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
-from ..fast_rcnn.config import cfg
-from ..utils.blob import im_list_to_blob
-from ..utils.timer import Timer
+from fast_rcnn.config import cfg
+from utils.blob import im_list_to_blob
+from utils.timer import Timer
 
 
 # <<<< obsolete

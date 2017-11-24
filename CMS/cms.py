@@ -7,7 +7,7 @@ from cv2 import cv2
 # from CMS.RPN.RPN import RPN
 from CMS.faster_rcnn import network
 from CMS.faster_rcnn.faster_rcnn import FasterRCNN, RPN
-from L2Normalization import L2Norm
+from Modules.L2Norm import L2Norm
 from fast_rcnn.bbox_transform import bbox_transform_inv, clip_boxes
 from fast_rcnn.nms_wrapper import nms
 from network import FC

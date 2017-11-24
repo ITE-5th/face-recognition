@@ -1,6 +1,6 @@
 from torch.nn.modules.module import Module
 
-from CMS.RPN.roi_pooling.functions.roi_pool import RoIPoolFunction
+from unused.RPN.roi_pooling.functions.roi_pool import RoIPoolFunction
 
 
 class RoIPool(Module):

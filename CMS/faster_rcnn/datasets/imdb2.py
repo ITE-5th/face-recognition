@@ -12,11 +12,11 @@ import numpy as np
 import scipy.sparse
 
 from . import ROOT_DIR
-from ..utils.cython_bbox import bbox_overlaps
+from utils.cython_bbox import bbox_overlaps
 
 # TODO: make fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
-from ..fast_rcnn.config import cfg
+from fast_rcnn.config import cfg
 # <<<< obsolete
 
 class imdb(object):

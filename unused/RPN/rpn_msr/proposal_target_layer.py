@@ -8,7 +8,7 @@
 import numpy as np
 import numpy.random as npr
 
-from CMS.RPN.utils.bbox import bbox_overlaps, bbox_intersections
+from unused.RPN.utils import bbox_overlaps, bbox_intersections
 from ..fast_rcnn.bbox_transform import bbox_transform
 from ..fast_rcnn.config import cfg
 

@@ -8,10 +8,10 @@
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-
-from CMS.RPN.fast_rcnn.config import cfg
 from CMS.RPN.utils.blob import im_list_to_blob
 from CMS.RPN.utils.timer import Timer
+
+from unused.RPN.fast_rcnn.config import cfg
 
 
 def _vis_proposals(im, dets, thresh=0.5):

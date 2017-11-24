@@ -26,7 +26,7 @@ from .voc_eval import voc_eval
 
 # TODO: make fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
-from ..fast_rcnn.config import cfg
+from fast_rcnn.config import cfg
 
 
 # <<<< obsolete

@@ -7,10 +7,10 @@
 
 import numpy as np
 import numpy.random as npr
+from CMS.RPN.rpn_msr.generate_anchors import generate_anchors
 from CMS.RPN.utils.cython_bbox import bbox_overlaps, bbox_intersections
 
-from CMS.RPN.fast_rcnn.config import cfg
-from CMS.RPN.rpn_msr.generate_anchors import generate_anchors
+from unused.RPN.fast_rcnn.config import cfg
 from ..fast_rcnn.bbox_transform import bbox_transform
 
 DEBUG = False

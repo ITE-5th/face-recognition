@@ -13,10 +13,10 @@ import PIL
 
 # TODO: make fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
-from ..fast_rcnn.config import cfg
-from ..fast_rcnn.bbox_transform import bbox_transform
+from fast_rcnn.config import cfg
+from fast_rcnn.bbox_transform import bbox_transform
 # <<<< obsolete
-from ..utils.cython_bbox import bbox_overlaps
+from utils.cython_bbox import bbox_overlaps
 
 def prepare_roidb(imdb):
     """Enrich the imdb's roidb by adding some derived quantities that

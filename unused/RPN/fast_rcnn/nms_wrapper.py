@@ -4,8 +4,9 @@
 # Licensed under The MIT License [see LICENSE for details]
 # Written by Ross Girshick
 # --------------------------------------------------------
-from CMS.RPN.nms.cpu_nms import cpu_nms
 from CMS.RPN.nms.gpu_nms import gpu_nms
+
+from unused.RPN.nms.cpu_nms import cpu_nms
 from .config import cfg
 
 

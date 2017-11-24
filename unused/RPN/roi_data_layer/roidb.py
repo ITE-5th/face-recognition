@@ -10,7 +10,7 @@
 import PIL
 import numpy as np
 
-from CMS.RPN.utils.bbox import bbox_overlaps
+from unused.RPN.utils import bbox_overlaps
 from ..fast_rcnn.bbox_transform import bbox_transform
 from ..fast_rcnn.config import cfg
 

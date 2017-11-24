@@ -23,13 +23,13 @@ from .imdb import imdb
 from .imdb import ROOT_DIR
 from .imdb import MATLAB
 
-from ..utils.cython_bbox import bbox_overlaps
-from ..utils.boxes_grid import get_boxes_grid
+from utils.cython_bbox import bbox_overlaps
+from utils.boxes_grid import get_boxes_grid
 
 # TODO: make fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
-from ..fast_rcnn.config import cfg
-from ..rpn_msr.generate_anchors import generate_anchors
+from fast_rcnn.config import cfg
+from rpn_msr.generate_anchors import generate_anchors
 # <<<< obsolete
 
 class pascal_voc(imdb):

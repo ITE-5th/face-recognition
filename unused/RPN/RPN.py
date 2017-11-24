@@ -1,12 +1,12 @@
 import torch
+from CMS.RPN import network
+from CMS.RPN.network import Conv2d
 from torch import functional as F
 from torch import nn
 from torch.autograd import Variable
 
-from CMS.RPN import network
-from CMS.RPN.network import Conv2d
-from CMS.RPN.rpn_msr import anchor_target_layer as anchor_target_layer_py
-from CMS.RPN.rpn_msr import proposal_layer as proposal_layer_py
+from unused.RPN.rpn_msr import anchor_target_layer as anchor_target_layer_py
+from unused.RPN.rpn_msr import proposal_layer as proposal_layer_py
 
 
 class RPN(nn.Module):

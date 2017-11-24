@@ -9,7 +9,7 @@ import numpy as np
 import math
 # TODO: make fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
-from ..fast_rcnn.config import cfg
+from fast_rcnn.config import cfg
 # <<<< obsolete
 
 def get_boxes_grid(image_height, image_width):

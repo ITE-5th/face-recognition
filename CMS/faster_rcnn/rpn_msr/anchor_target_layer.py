@@ -12,7 +12,7 @@ from CMS.faster_rcnn.utils.cython_bbox import bbox_overlaps, bbox_intersections
 from CMS.faster_rcnn.fast_rcnn.config import cfg
 from CMS.faster_rcnn.rpn_msr.generate_anchors import generate_anchors
 # <<<< obsolete
-from ..fast_rcnn.bbox_transform import bbox_transform
+from fast_rcnn.bbox_transform import bbox_transform
 
 DEBUG = False
 

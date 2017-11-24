@@ -7,7 +7,7 @@
 
 # TODO: make this fold self-contained, only depends on utils package
 
-from .imdb import imdb
+from datasets.imdb import imdb
 from .pascal_voc import pascal_voc
 from .pascal3d import pascal3d
 from .imagenet3d import imagenet3d
