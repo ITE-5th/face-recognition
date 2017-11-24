@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from cv2 import cv2
 
-from CMS.Modules.L2Norm import L2Norm
+from CMS.modules.L2Norm import L2Norm
 from CMS.faster_rcnn import network
 from CMS.faster_rcnn.fast_rcnn.bbox_transform import bbox_transform_inv, clip_boxes
 from CMS.faster_rcnn.fast_rcnn.nms_wrapper import nms
