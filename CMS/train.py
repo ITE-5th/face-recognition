@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 
 import numpy as np
 import torch
@@ -43,8 +42,6 @@ lr_decay_steps = {60000, 80000}
 lr_decay = 1. / 10
 
 rand_seed = 1024
-_DEBUG = True
-use_tensorboard = True
 remove_all_log = False  # remove all historical experiments in TensorBoard
 exp_name = None  # the previous experiment name in TensorBoard
 
@@ -68,10 +65,10 @@ roidb = imdb.roidb
 data_layer = RoIDataLayer(roidb, imdb.num_classes)
 
 # load net
-net = CMSRCNN()
-network.weights_normal_init(net, dev=0.01)
-network.load_pretrained_npy(net,
-                            pretrained_model)  # model_file = '/media/longc/Data/models/VGGnet_fast_rcnn_iter_70000.h5'
+net = CMSRCNN().load_pretrained()
+# network.weights_normal_init(net, dev=0.01)
+# network.load_pretrained_npy(net,
+#                             pretrained_model)  # model_file = '/media/longc/Data/models/VGGnet_fast_rcnn_iter_70000.h5'
 # model_file = 'models/saved_model3/faster_rcnn_60000.h5'
 # .faster_rcnn.  network.load_net(model_file, net)
 # exp_name = 'vgg16_02-19_13-24'
@@ -88,18 +85,6 @@ optimizer = torch.optim.SGD(params[8:], lr=lr, momentum=momentum, weight_decay=w
 
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
-
-# tensorboad
-use_tensorboard = use_tensorboard and CrayonClient is not None
-if use_tensorboard:
-    cc = CrayonClient(hostname='127.0.0.1')
-    if remove_all_log:
-        cc.remove_all_experiments()
-    if exp_name is None:
-        exp_name = datetime.now().strftime('vgg16_%m-%d_%H-%M')
-        exp = cc.create_experiment(exp_name)
-    else:
-        exp = cc.open_experiment(exp_name)
 
 # training
 train_loss = 0
@@ -122,12 +107,6 @@ for step in range(start_step, end_step + 1):
     net(im_data, im_info, gt_boxes, gt_ishard, dontcare_areas)
     loss = net.loss + net.rpn.loss
 
-    if _DEBUG:
-        tp += float(net.tp)
-        tf += float(net.tf)
-        fg += net.fg_cnt
-        bg += net.bg_cnt
-
     train_loss += loss.data[0]
     step_cnt += 1
 
@@ -145,26 +124,7 @@ for step in range(start_step, end_step + 1):
             step, blobs['im_name'], train_loss / step_cnt, fps, 1. / fps)
         log_print(log_text, color='green', attrs=['bold'])
 
-        if _DEBUG:
-            log_print('\tTP: %.2f%%, TF: %.2f%%, fg/bg=(%d/%d)' % (
-                tp / fg * 100., tf / bg * 100., fg / step_cnt, bg / step_cnt))
-            log_print('\trpn_cls: %.4f, rpn_box: %.4f, rcnn_cls: %.4f, rcnn_box: %.4f' % (
-                net.rpn.cross_entropy.data.cpu().numpy()[0], net.rpn.loss_box.data.cpu().numpy()[0],
-                net.cross_entropy.data.cpu().numpy()[0], net.loss_box.data.cpu().numpy()[0])
-                      )
         re_cnt = True
-
-    if use_tensorboard and step % log_interval == 0:
-        exp.add_scalar_value('train_loss', train_loss / step_cnt, step=step)
-        exp.add_scalar_value('learning_rate', lr, step=step)
-        if _DEBUG:
-            exp.add_scalar_value('true_positive', tp / fg * 100., step=step)
-            exp.add_scalar_value('true_negative', tf / bg * 100., step=step)
-            losses = {'rpn_cls': float(net.rpn.cross_entropy.data.cpu().numpy()[0]),
-                      'rpn_box': float(net.rpn.loss_box.data.cpu().numpy()[0]),
-                      'rcnn_cls': float(net.cross_entropy.data.cpu().numpy()[0]),
-                      'rcnn_box': float(net.loss_box.data.cpu().numpy()[0])}
-            exp.add_scalar_dict(losses, step=step)
 
     if (step % 10000 == 0) and step > 0:
         save_name = os.path.join(output_dir, 'faster_rcnn_{}.h5'.format(step))

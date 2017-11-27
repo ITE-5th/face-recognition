@@ -75,3 +75,5 @@ unused/
 CMS/vgg-face-download.py
 Excluded Data/
 CMS/main.py
+/models/
+CMS/csv_to_json.py

@@ -1,18 +1,20 @@
+import copy
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from cv2 import cv2
 
-from CMS.modules.L2Norm import L2Norm
 from CMS.faster_rcnn import network
 from CMS.faster_rcnn.fast_rcnn.bbox_transform import bbox_transform_inv, clip_boxes
 from CMS.faster_rcnn.fast_rcnn.nms_wrapper import nms
-from CMS.faster_rcnn.faster_rcnn import FasterRCNN, RPN
+from CMS.faster_rcnn.faster_rcnn import RPN
+from CMS.faster_rcnn.network import FC
 from CMS.faster_rcnn.roi_pooling.modules.roi_pool import RoIPool
 from CMS.faster_rcnn.rpn_msr.proposal_target_layer import proposal_target_layer as proposal_target_layer_py
 from CMS.faster_rcnn.utils.blob import im_list_to_blob
-from CMS.faster_rcnn.network import FC
+from CMS.modules.L2Norm import L2Norm
 
 
 def nms_detections(pred_boxes, scores, nms_thresh, inds=None):
@@ -43,49 +45,31 @@ class CMSRCNN(nn.Module):
 
         self.pool = nn.MaxPool2d(2)
 
-        self.conv_a1 = nn.Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv_b1 = nn.Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-
-        self.conv_a2 = nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv_b2 = nn.Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-
-        self.conv_a3 = nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv_b3 = nn.Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv_c3 = nn.Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-
         self.seq1 = nn.Sequential(
 
-            self.conv_a1,
-            self.conv_b1,
+            nn.Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
             nn.MaxPool2d(2),
 
-            self.conv_a2,
-            self.conv_b2,
+            nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
             nn.MaxPool2d(2),
 
-            self.conv_a3,
-            self.conv_b3,
-            self.conv_c3,
+            nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
         )
-
-        self.conv_a4 = nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv_b4 = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv_c4 = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
         self.seq2 = nn.Sequential(
-            self.conv_a4,
-            self.conv_b4,
-            self.conv_c4,
+            nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
         )
 
-        self.conv_a5 = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv_b5 = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv_c5 = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-
         self.seq3 = nn.Sequential(
-            self.conv_a5,
-            self.conv_b5,
-            self.conv_c5,
+            nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
         )
 
         self.rpn = RPN()
@@ -331,27 +315,6 @@ class CMSRCNN(nn.Module):
 
         return blob, np.array(im_scale_factors)
 
-    def load_from_npz(self, params):
-        self.rpn.load_from_npz(params)
-
-        pairs = {'fc6.fc': 'fc6', 'fc7.fc': 'fc7', 'score_fc.fc': 'cls_score', 'bbox_fc.fc': 'bbox_pred'}
-        own_dict = self.state_dict()
-        for k, v in list(pairs.items()):
-            key = '{}.weight'.format(k)
-            param = torch.from_numpy(params['{}/weights:0'.format(v)]).permute(1, 0)
-            own_dict[key].copy_(param)
-
-            key = '{}.bias'.format(k)
-            param = torch.from_numpy(params['{}/biases:0'.format(v)])
-            own_dict[key].copy_(param)
-
-    def load_from_rcnn(self, rcnn_model_path):
-        detector = FasterRCNN()
-        network.load_net(rcnn_model_path, detector)
-
-        self.rpn = detector.rpn
-        print(self.rpn.eval())
-
     @staticmethod
     def project_into_feature_maps(feature_maps, rois, im_info):
         """
@@ -422,3 +385,30 @@ class CMSRCNN(nn.Module):
             b_bboxes = b_bboxes.cuda()
 
         return bboxes, b_bboxes
+
+    @staticmethod
+    def load_pretrained(path="models/cms.pth"):
+        return torch.load(path)
+
+    def load_faster_rcnn(self, path: str):
+        rcnn = torch.load(path)
+
+        self.seq1[0].weight = copy.deepcopy(rcnn[0].weight)
+        self.seq1[1].weight = copy.deepcopy(rcnn[2].weight)
+        self.seq1[3].weight = copy.deepcopy(rcnn[5].weight)
+        self.seq1[4].weight = copy.deepcopy(rcnn[7].weight)
+        self.seq1[6].weight = copy.deepcopy(rcnn[10].weight)
+        self.seq1[7].weight = copy.deepcopy(rcnn[12].weight)
+        self.seq1[8].weight = copy.deepcopy(rcnn[14].weight)
+
+        self.seq2[0].weight = copy.deepcopy(rcnn[17].weight)
+        self.seq2[1].weight = copy.deepcopy(rcnn[19].weight)
+        self.seq2[2].weight = copy.deepcopy(rcnn[21].weight)
+
+        self.seq3[0].weight = copy.deepcopy(rcnn[24].weight)
+        self.seq3[1].weight = copy.deepcopy(rcnn[26].weight)
+        self.seq3[2].weight = copy.deepcopy(rcnn[28].weight)
+
+        self.rpn.conv1.conv.weight = copy.deepcopy(rcnn[30].weight)
+        self.rpn.score_conv.conv.weight = copy.deepcopy(rcnn[32].weight)
+        self.rpn.bbox_conv.conv.weight = copy.deepcopy(rcnn[33].weight)
