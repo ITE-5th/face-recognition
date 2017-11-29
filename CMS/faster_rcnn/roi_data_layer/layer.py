@@ -5,7 +5,7 @@
 # Written by Ross Girshick
 # --------------------------------------------------------
 
-"""The data layer used during training to train a Fast R-CNN .faster_rcnn.network.
+"""The data layer used during training to train a Fast R-CNN network.
 
 RoIDataLayer implements a Caffe Python layer.
 """

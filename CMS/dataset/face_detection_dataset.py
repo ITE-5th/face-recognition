@@ -26,17 +26,17 @@ class FaceDetectionDataset(Dataset):
 
     def __getitem__(self, index):
         img_name = os.path.join(self.root_dir, self.names[index])
-        image = cv2.imread(img_name)
-
-        image = np.swapaxes(image, 0, 2)
-        image = np.swapaxes(image, 1, 2)
-        image = torch.from_numpy(image)
-
-        bboxes = self.bboxes[self.names[index]]
-        sample = {'image': image, 'bboxes': [[int(coord) for coord in bbox] for bbox in bboxes]}
+        image = cv2.imread(img_name).astype(np.float)
 
         if self.transform:
-            sample = self.transform(sample)
+            image, scale = self.transform(image)
+
+        # image = np.swapaxes(image, 0, 2)
+        # image = np.swapaxes(image, 1, 2)
+        # image = network.np_to_variable(image, is_cuda=True)
+        image = torch.FloatTensor(image)
+        bboxes = np.array(self.bboxes[self.names[index]], dtype=np.float)[:, :5]
+        sample = {'image': image, 'bboxes': bboxes, "scale": scale}
 
         return sample
 
@@ -51,13 +51,9 @@ if __name__ == "__main__":
 
     im2show = np.copy(image)
     for i, det in enumerate(row['bboxes']):
-        # for j, a in enumerate(det):
-        # det[2] += det[0]
-        # det[3] += det[1]
-        # det = list(map(int, det))
-        det[2] += det[0]
-        det[3] += det[1]
-        det = tuple(int(x) for x in det[:4])
+        det[2:4] += det[:2]
+        # det = tuple(int(x) for x in det[:4])
+        det = tuple(det[:4])
         print(det)
 
         cv2.rectangle(im2show, det[0:2], det[2:4], (255, 205, 51), 2)

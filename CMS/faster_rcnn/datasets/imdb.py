@@ -13,7 +13,7 @@ import scipy.sparse
 
 # TODO: make CMS.faster_rcnn.fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
-from utils.cython_bbox import bbox_overlaps
+from CMS.faster_rcnn.utils.cython_bbox import bbox_overlaps
 from ..fast_rcnn.config import cfg
 
 # <<<< obsolete

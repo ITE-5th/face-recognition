@@ -9,13 +9,13 @@ import math
 from .imdb import imdb
 from .imdb import ROOT_DIR
 
-from utils.cython_bbox import bbox_overlaps
-from utils.boxes_grid import get_boxes_grid
+from CMS.faster_rcnn.utils.cython_bbox import bbox_overlaps
+from CMS.faster_rcnn.utils.boxes_grid import get_boxes_grid
 
 # TODO: make CMS.faster_rcnn.fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
 from ..fast_rcnn.config import cfg
-from rpn_msr.generate_anchors import generate_anchors
+from CMS.faster_rcnn.rpn_msr.generate_anchors import generate_anchors
 
 
 # <<<< obsolete

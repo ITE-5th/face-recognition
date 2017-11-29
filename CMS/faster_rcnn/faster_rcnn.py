@@ -341,7 +341,7 @@ class FasterRCNN(nn.Module):
         return blob, np.array(im_scale_factors)
 
     def get_image_blob(self, im):
-        """Converts an image into a .faster_rcnn.network input.
+        """Converts an image into a network input.
         Arguments:
             im (ndarray): a color image in BGR order
         Returns:

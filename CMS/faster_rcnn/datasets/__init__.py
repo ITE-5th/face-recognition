@@ -7,20 +7,19 @@
 
 # TODO: make this fold self-contained, only depends on utils package
 
-from datasets.imdb import imdb
-from .pascal_voc import pascal_voc
-from .pascal3d import pascal3d
+from CMS.faster_rcnn.datasets.imdb import imdb
+from . import factory
 from .imagenet3d import imagenet3d
+from .imdb import MATLAB
+## NOTE: obsolete
+from .imdb import ROOT_DIR
 from .kitti import kitti
 from .kitti_tracking import kitti_tracking
 from .nissan import nissan
 from .nthu import nthu
-from . import factory
+from .pascal3d import pascal3d
+from .pascal_voc import pascal_voc
 
-## NOTE: obsolete
-import os.path as osp
-from .imdb import ROOT_DIR
-from .imdb import MATLAB
 
 # http://stackoverflow.com/questions/377017/test-if-executable-exists-in-python
 def _which(program):
@@ -40,6 +39,8 @@ def _which(program):
                 return exe_file
 
     return None
+
+
 """
 if _which(MATLAB) is None:
     msg = ("MATLAB command '{}' not found. "
