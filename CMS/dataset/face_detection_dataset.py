@@ -2,7 +2,6 @@ import json
 import os
 
 import numpy as np
-import torch
 from cv2 import cv2
 from torch.utils.data import Dataset
 
@@ -16,6 +15,7 @@ class FaceDetectionDataset(Dataset):
         :param root_dir (string): Directory with all images.
         :param transform (callable, optional): Optional transform to be applied on a sample.
         """
+        self.max_bboxes = 500
         self.root_dir = root_dir
         self.transform = transform
         self.bboxes = json.load(open(json_file))
@@ -28,15 +28,30 @@ class FaceDetectionDataset(Dataset):
         img_name = os.path.join(self.root_dir, self.names[index])
         image = cv2.imread(img_name).astype(np.float)
 
-        if self.transform:
-            image, scale = self.transform(image)
-
         # image = np.swapaxes(image, 0, 2)
         # image = np.swapaxes(image, 1, 2)
         # image = network.np_to_variable(image, is_cuda=True)
-        image = torch.FloatTensor(image)
-        bboxes = np.array(self.bboxes[self.names[index]], dtype=np.float)[:, :5]
-        sample = {'image': image, 'bboxes': bboxes, "scale": scale}
+        # image = torch.FloatTensor(image)
+
+        actualBBoxes = self.bboxes[self.names[index]]
+        bboxes_count = len(actualBBoxes)
+
+        bboxes = np.array(actualBBoxes, dtype=np.float)[:, :5]
+        try:
+            padding = np.ones((self.max_bboxes - bboxes_count, 5)) * -1
+        except:
+            print(bboxes_count)
+
+        bboxes = np.concatenate((bboxes, padding), axis=0)
+
+        bboxes[:, 2] += bboxes[:, 0]
+        bboxes[:, 3] += bboxes[:, 1]
+        bboxes[:, 4] = 1
+
+        sample = {'image': image, 'bboxes': bboxes, 'bboxes_count': bboxes_count}
+
+        if self.transform:
+            self.transform(sample)
 
         return sample
 
