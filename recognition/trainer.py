@@ -1,4 +1,3 @@
-import glob
 import os
 from multiprocessing import cpu_count
 
@@ -12,38 +11,43 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 
 from evm.evm import EVM
-from preprocessing.preprocessor import to_tensor
 from recognition.face_recognition_dataset import FaceRecognitionDataset
 from recognition.image_feature_extractor import ImageFeatureExtractor
 from recognition.net import Net
 
 
-def save_checkpoint(state, filename='checkpoint.pth.tar'):
-    torch.save(state, filename)
+def save_checkpoint(state, epoch):
+    torch.save(state, "../models/checkpoint-{}.pth.tar".format(epoch))
 
 
-faces_image_path = "../data/lfw2/"
+root_path = "../data"
 use_evm = False
 if not use_evm:
-    batch_size = 1024
-    dataset = FaceRecognitionDataset(faces_image_path)
+    batch_size = 256
+    dataset = FaceRecognitionDataset(root_path)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=cpu_count())
-    l = len(os.listdir(faces_image_path))
-    net = Net(l)
+    l = len(os.listdir(root_path + "/lfw2"))
+    net = Net(l, vgg_face=True)
     net = nn.DataParallel(net).cuda()
     criterion = nn.CrossEntropyLoss().cuda()
     optimizer = Adam(filter(lambda x: x.requires_grad, net.parameters()), lr=0.01)
-    epochs = 100
+    epochs = 1000
     batch_loss, total_loss = 0, 0
-    batches = 0
+    batches = len(dataset.faces) / batch_size
     print("faces = {}".format(len(dataset.faces)))
-    print("batches = {}".format(len(dataset.faces) / batch_size))
+    print("batches = {}".format(batches))
     print("Begin Training")
     for epoch in range(epochs):
+        epoch_loss, epoch_correct = 0, 0
         for batch, (inputs, labels) in enumerate(dataloader, 0):
             inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
             outputs = net(inputs)
             loss = criterion(outputs, labels)
+            _, first = outputs.data.max(1)
+            second = labels.data
+            correct = torch.eq(first, second).sum()
+            epoch_correct += correct
+            epoch_loss += loss.data[0]
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -52,9 +56,9 @@ if not use_evm:
             'state_dict': net.state_dict(),
             'optimizer': optimizer.state_dict(),
             "num_classes": l
-        })
-        print("epoch {} finished".format(epoch))
-        total_loss, batches = 0, 0
+        }, epoch + 1)
+        print('Epoch {} done, average loss: {}, average accuracy: {}%'.format(
+            epoch + 1, epoch_loss / batches, epoch_correct * 100 / (batches * batch_size)))
 else:
     # TODO: review :)
     features = ImageFeatureExtractor.load("./data")

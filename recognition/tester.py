@@ -1,10 +1,11 @@
+import os
+
+import cv2
 import torch
 from torch.autograd import Variable
-from recognition.net import Net, extractor
+
 from preprocessing.aligner_preprocessor import AlignerPreprocessor
-import cv2
-import os
-import numpy as np
+from recognition.net import Net, extractor
 
 
 def to_module(state_dict):
@@ -24,12 +25,10 @@ net = Net(state["num_classes"])
 net.load_state_dict(state_dict)
 net.eval()
 net = net.cuda()
-image = cv2.imread("../test_image2.jpeg")
+image = cv2.imread("../test_image.jpeg")
 preprocessor = AlignerPreprocessor()
 image = preprocessor.preprocess(image)
-aligned = np.swapaxes(image, 0, 2)
-aligned = np.swapaxes(aligned, 1, 2)
-image = torch.from_numpy(aligned).float()
+image = torch.from_numpy(image).float()
 image = image.unsqueeze(0)
 x = Variable(image.cuda())
 x = extractor(x)
