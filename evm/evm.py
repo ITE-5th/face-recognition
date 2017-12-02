@@ -12,14 +12,14 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 
 class EVM(BaseEstimator):
     def __init__(self,
-                 tail_size: int = 100,
+                 tail: int = 100,
                  open_set_threshold: float = 0.5,
                  k: int = 5,
                  with_reduction: bool = False,
                  redundancy_rate: float = 0.5,
                  n_jobs: int = cpu_count()):
         super().__init__()
-        self.tail_size = tail_size
+        self.tail = tail
         self.classes = []
         self.dists = []
         self.open_set_threshold = open_set_threshold
@@ -66,12 +66,12 @@ class EVM(BaseEstimator):
         out_class = np.concatenate([self.classes[i] for i in range(len(self.classes)) if i != class_index])
         distances = cdist(in_class, out_class)
         distances.sort(axis=1)
-        distances = 0.5 * distances[:, :self.tail_size]
+        distances = 0.5 * distances[:, :self.tail]
         return np.apply_along_axis(self._fit_weibull, 1, distances)
 
     def _fit_weibull(self, row):
         mr = libmr.MR()
-        mr.fit_low(row, self.tail_size)
+        mr.fit_low(row, self.tail)
         return mr
 
     def predict(self, X):
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     print("number of training samples = {}, obviously choosing a small tail will yield a very bad result".format(
         X_train.shape[0]))
     estimator = EVM(open_set_threshold=0)
-    params = {"tail_size": [700]}
+    params = {"tail": [700]}
     grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
     grid.fit(X_train, y_train)
     best_estimator = grid.best_estimator_
