@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-from . import network
+from CMS.faster_rcnn import network
 from .fast_rcnn.bbox_transform import bbox_transform_inv, clip_boxes
 from .fast_rcnn.nms_wrapper import nms
 from .network import Conv2d, FC
@@ -48,7 +48,7 @@ class RPN(nn.Module):
         return self.cross_entropy + self.loss_box * 10
 
     def forward(self, features, im_info, gt_boxes=None, gt_ishard=None, dontcare_areas=None):
-        # im_data = network.np_to_variable(im_data, is_cuda=True)
+        # im_data = .faster_rcnn.network.np_to_variable(im_data, is_cuda=True)
         # im_data = im_data.permute(0, 3, 1, 2)
         # features = self.features(im_data)
 

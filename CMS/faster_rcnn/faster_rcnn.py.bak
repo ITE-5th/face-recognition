@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-from faster_rcnn import network
+from faster_rcnn import .faster_rcnn.network
 from faster_rcnn.fast_rcnn.bbox_transform import bbox_transform_inv, clip_boxes
 from faster_rcnn.fast_rcnn.nms_wrapper import nms
 from faster_rcnn.network import Conv2d, FC
@@ -47,7 +47,7 @@ class RPN(nn.Module):
         return self.cross_entropy + self.loss_box * 10
 
     def forward(self, im_data, im_info, gt_boxes=None, gt_ishard=None, dontcare_areas=None):
-        im_data = network.np_to_variable(im_data, is_cuda=True)
+        im_data = .faster_rcnn.network.np_to_variable(im_data, is_cuda=True)
         im_data = im_data.permute(0, 3, 1, 2)
         features = self.features(im_data)
 
@@ -118,7 +118,7 @@ class RPN(nn.Module):
         rpn_cls_prob_reshape = rpn_cls_prob_reshape.data.cpu().numpy()
         rpn_bbox_pred = rpn_bbox_pred.data.cpu().numpy()
         x = proposal_layer_py(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, cfg_key, _feat_stride, anchor_scales)
-        x = network.np_to_variable(x, is_cuda=True)
+        x = .faster_rcnn.network.np_to_variable(x, is_cuda=True)
         return x.view(-1, 5)
 
     @staticmethod
@@ -146,10 +146,10 @@ class RPN(nn.Module):
             anchor_target_layer_py(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_info, _feat_stride,
                                    anchor_scales)
 
-        rpn_labels = network.np_to_variable(rpn_labels, is_cuda=True, dtype=torch.LongTensor)
-        rpn_bbox_targets = network.np_to_variable(rpn_bbox_targets, is_cuda=True)
-        rpn_bbox_inside_weights = network.np_to_variable(rpn_bbox_inside_weights, is_cuda=True)
-        rpn_bbox_outside_weights = network.np_to_variable(rpn_bbox_outside_weights, is_cuda=True)
+        rpn_labels = .faster_rcnn.network.np_to_variable(rpn_labels, is_cuda=True, dtype=torch.LongTensor)
+        rpn_bbox_targets = .faster_rcnn.network.np_to_variable(rpn_bbox_targets, is_cuda=True)
+        rpn_bbox_inside_weights = .faster_rcnn.network.np_to_variable(rpn_bbox_inside_weights, is_cuda=True)
+        rpn_bbox_outside_weights = .faster_rcnn.network.np_to_variable(rpn_bbox_outside_weights, is_cuda=True)
 
         return rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights
 
@@ -284,11 +284,11 @@ class FasterRCNN(nn.Module):
         rois, labels, bbox_targets, bbox_inside_weights, bbox_outside_weights = \
             proposal_target_layer_py(rpn_rois, gt_boxes, gt_ishard, dontcare_areas, num_classes)
         # print labels.shape, bbox_targets.shape, bbox_inside_weights.shape
-        rois = network.np_to_variable(rois, is_cuda=True)
-        labels = network.np_to_variable(labels, is_cuda=True, dtype=torch.LongTensor)
-        bbox_targets = network.np_to_variable(bbox_targets, is_cuda=True)
-        bbox_inside_weights = network.np_to_variable(bbox_inside_weights, is_cuda=True)
-        bbox_outside_weights = network.np_to_variable(bbox_outside_weights, is_cuda=True)
+        rois = .faster_rcnn.network.np_to_variable(rois, is_cuda=True)
+        labels = .faster_rcnn.network.np_to_variable(labels, is_cuda=True, dtype=torch.LongTensor)
+        bbox_targets = .faster_rcnn.network.np_to_variable(bbox_targets, is_cuda=True)
+        bbox_inside_weights = .faster_rcnn.network.np_to_variable(bbox_inside_weights, is_cuda=True)
+        bbox_outside_weights = .faster_rcnn.network.np_to_variable(bbox_outside_weights, is_cuda=True)
 
         return rois, labels, bbox_targets, bbox_inside_weights, bbox_outside_weights
 
@@ -340,7 +340,7 @@ class FasterRCNN(nn.Module):
         return blob, np.array(im_scale_factors)
 
     def get_image_blob(self, im):
-        """Converts an image into a network input.
+        """Converts an image into a .faster_rcnn.network input.
         Arguments:
             im (ndarray): a color image in BGR order
         Returns:

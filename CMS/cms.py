@@ -1,19 +1,20 @@
+import copy
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from cv2 import cv2
 
-# from CMS.RPN.RPN import RPN
 from CMS.faster_rcnn import network
-from CMS.faster_rcnn.faster_rcnn import FasterRCNN, RPN
-from L2Normalization import L2Norm
-from fast_rcnn.bbox_transform import bbox_transform_inv, clip_boxes
-from fast_rcnn.nms_wrapper import nms
-from network import FC
-from roi_pooling.modules.roi_pool import RoIPool
-from rpn_msr.proposal_target_layer import proposal_target_layer as proposal_target_layer_py
-from utils.blob import im_list_to_blob
+from CMS.faster_rcnn.fast_rcnn.bbox_transform import bbox_transform_inv, clip_boxes
+from CMS.faster_rcnn.fast_rcnn.nms_wrapper import nms
+from CMS.faster_rcnn.faster_rcnn import RPN
+from CMS.faster_rcnn.network import FC
+from CMS.faster_rcnn.roi_pooling.modules.roi_pool import RoIPool
+from CMS.faster_rcnn.rpn_msr.proposal_target_layer import proposal_target_layer as proposal_target_layer_py
+from CMS.faster_rcnn.utils.blob import im_list_to_blob
+from CMS.modules.L2Norm import L2Norm
 
 
 def nms_detections(pred_boxes, scores, nms_thresh, inds=None):
@@ -25,27 +26,13 @@ def nms_detections(pred_boxes, scores, nms_thresh, inds=None):
     return pred_boxes[keep], scores[keep], inds[keep]
 
 
-def project_into_feature_maps(feature_maps, rois):
-    """
-    project RPN outputs on feature maps and return the head with the body
-    tx = (xb-xf)/wf
-    ty = (yb-yf)/hf
-    tw = log(wb/wf)
-    th = log(hb/hf)
-    :param feature_maps:
-    :param rois:
-    :return:
-    """
-
-    b, c, w, h = feature_maps.shape
-    counts, bboxes = rois[0], rois[1:]
-
-    # for feature_map in feature_maps:
-
-    pass
-
-
 class CMSRCNN(nn.Module):
+    PIXEL_MEANS = np.array([[[102.9801, 115.9465, 122.7717]]])
+    SCALES = (600,)
+    MAX_SIZE = 1000
+    n_classes = 2
+    classes = np.asarray(['__background__', 'face'])
+
     def __init__(self):
         super(CMSRCNN, self).__init__()
         # VGG-16 structure: [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M']
@@ -56,110 +43,91 @@ class CMSRCNN(nn.Module):
         # remove classifier layers
         # self.vgg = nn.Sequential(*(vgg_face._modules['{}'.format(i)] for i in range(31)))
 
-        # define RPN layer
-        # self.rpn = RPN(vgg=self.vgg)
-
-        self.pool = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2), dilation=(1, 1))
-
-        self.conv_a1 = nn.Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv_b1 = nn.Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-
-        self.conv_a2 = nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv_b2 = nn.Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-
-        self.conv_a3 = nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv_b3 = nn.Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv_c3 = nn.Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        self.pool = nn.MaxPool2d(2)
 
         self.seq1 = nn.Sequential(
-            self.conv_a1,
-            nn.ReLU(),
-            self.conv_b1,
-            nn.ReLU(),
-            self.pool,
 
-            self.conv_a2,
-            nn.ReLU(),
-            self.conv_b2,
-            nn.ReLU(),
-            self.pool,
+            nn.Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.MaxPool2d(2),
 
-            self.conv_a3,
-            nn.ReLU(),
-            self.conv_b3,
-            nn.ReLU(),
-            self.conv_c3,
-            nn.ReLU()
+            nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.MaxPool2d(2),
+
+            nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
         )
-
-        self.conv_a4 = nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv_b4 = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv_c4 = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
 
         self.seq2 = nn.Sequential(
-            self.conv_a4,
-            nn.ReLU(),
-            self.conv_b4,
-            nn.ReLU(),
-            self.conv_c4,
-            nn.ReLU()
+            nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
         )
 
-        self.conv_a5 = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv_b5 = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-        self.conv_c5 = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-
         self.seq3 = nn.Sequential(
-            self.conv_a5,
-            nn.ReLU(),
-            self.conv_b5,
-            nn.ReLU(),
-            self.conv_c5,
-            nn.ReLU()
+            nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
         )
 
         self.rpn = RPN()
 
-        self.l2norm_rpn_1 = L2Norm(scaling_factor=0.1)
-        self.l2norm_rpn_2 = L2Norm(scaling_factor=0.1)
-        self.l2norm_rpn_3 = L2Norm(scaling_factor=0.1)
+        c = 512
+        self.l2norm_rpn_1 = L2Norm([66.84] * 256)
+        self.l2norm_rpn_2 = L2Norm([94.52] * c)
+        self.l2norm_rpn_3 = L2Norm([94.52] * c)
 
-        self.l2norm_fc_1 = L2Norm(scaling_factor=0.1)
-        self.l2norm_fc_2 = L2Norm(scaling_factor=0.1)
-        self.l2norm_fc_3 = L2Norm(scaling_factor=0.1)
+        self.l2norm_faces_1 = L2Norm([57.75] * 256)
+        self.l2norm_faces_2 = L2Norm([81.67] * c)
+        self.l2norm_faces_3 = L2Norm([81.67] * c)
 
-        # TODO: remove or keep padding??
-        self.conv1x1_rpn = nn.Conv2d(512 * 3, 512, kernel_size=(1, 1), stride=(1, 1), padding=(1, 1))
-        self.conv1x1_faces = nn.Conv2d(512 * 3, 512 * 7 * 7, kernel_size=(1, 1), stride=(1, 1), padding=(1, 1))
-        self.conv1x1_bodies = nn.Conv2d(512 * 3, 512 * 7 * 7, kernel_size=(1, 1), stride=(1, 1), padding=(1, 1))
+        self.l2norm_bodies_1 = L2Norm([57.75] * 256)
+        self.l2norm_bodies_2 = L2Norm([81.67] * c)
+        self.l2norm_bodies_3 = L2Norm([81.67] * c)
 
+        self.conv1x1_rpn = nn.Conv2d(1280, 512, 1)
+        self.conv1x1_faces = nn.Conv2d(1280, 512, 1)
+        self.conv1x1_bodies = nn.Conv2d(1280, 512, 1)
+
+        # TODO: correct parameters
         self.roi_pool1 = RoIPool(7, 7, 1.0 / 16)
         self.roi_pool2 = RoIPool(7, 7, 1.0 / 16)
         self.roi_pool3 = RoIPool(7, 7, 1.0 / 16)
 
         self.fc1 = FC(512 * 7 * 7, 4096)
-        self.fc2 = FC(4096, 4096)
-        self.score_fc = FC(4096, 2, relu=False)
-        self.bbox_fc = FC(4096, 4, relu=False)
+        self.fc2 = FC(512 * 7 * 7, 4096)
+        self.score_fc = FC(4096 * 2, self.n_classes, relu=False)
+        self.bbox_fc = FC(4096 * 2, self.n_classes * 4, relu=False)
 
         self.cross_entropy = None
         self.loss_box = None
 
     def forward(self, im_data, im_info, gt_boxes=None, gt_ishard=None, dontcare_areas=None):
+        im_data = network.np_to_variable(im_data, is_cuda=True)
+        im_data = im_data.permute(0, 3, 1, 2)
+
         x1 = self.seq1(im_data)
-        x2 = self.seq2(self.pool(x1))
-        x3 = self.seq3(self.pool(x2))
+        x1_rpn = self.pool(x1)
+
+        x2 = self.seq2(x1_rpn)
+        x2_rpn = self.pool(x2)
+
+        x3 = self.seq3(x2_rpn)
 
         # region RPN
 
         # 2x pooling
-        x1_rpn = self.l2norm_rpn_1(self.pool(self.pool(x1)))
+        x1_rpn = self.l2norm_rpn_1(self.pool(x1_rpn))
         # 1x pooling
-        x2_rpn = self.l2norm_rpn_2(self.pool(x2))
+        x2_rpn = self.l2norm_rpn_2(x2_rpn)
         # 0x pooling
         x3_rpn = self.l2norm_rpn_3(x3)
 
-        rpn_input = self.conv1x1_rpn(torch.cat((x1_rpn, x2_rpn, x3_rpn), 0))
+        rpn_input = self.conv1x1_rpn(torch.cat((x1_rpn, x2_rpn, x3_rpn), 1))
+        # del temp, x1_rpn, x2_rpn, x3_rpn
+
         rois = self.rpn(rpn_input, im_info, gt_boxes, gt_ishard, dontcare_areas)
 
         if self.training:
@@ -169,29 +137,40 @@ class CMSRCNN(nn.Module):
         # endregion
 
         # project into feature maps
-        face1, body1 = project_into_feature_maps(x1, rois)
-        face2, body2 = project_into_feature_maps(x2, rois)
-        face3, body3 = project_into_feature_maps(x3, rois)
+        face, body = self.project_into_feature_maps(x1, rois, im_info)
+        face2, body2 = self.project_into_feature_maps(x2, rois, im_info)
+        face3, body3 = self.project_into_feature_maps(x3, rois, im_info)
+
+        x1_rpn = self.roi_pool1(x1, body)
+        x2_rpn = self.roi_pool2(x2, body2)
+        x3_rpn = self.roi_pool3(x3, body3)
 
         # TODO: add dropout layer?
-        bodies = torch.cat((self.roi_pool1(body1), self.roi_pool2(body2), self.roi_pool(body3)), 0)
-        bodies = self.l2norm_fc_1(bodies)
-        bodies = self.conv1x1_bodies(bodies)
+        body = torch.cat((self.l2norm_bodies_1(x1_rpn),
+                          self.l2norm_bodies_2(x2_rpn),
+                          self.l2norm_bodies_3(x3_rpn)), 1)
+
+        body = self.conv1x1_bodies(body)
+        body = body.view(body.size()[0], -1)
 
         # TODO: add dropout layer?
-        faces = torch.cat((self.roi_pool1(face1), self.roi_pool2(face2), self.roi_pool3(face3)), 0)
-        faces = self.l2norm_fc_2(faces)
-        faces = self.conv1x1_faces(faces)
+        face = torch.cat((self.l2norm_faces_1(self.roi_pool1(x1, face)),
+                          self.l2norm_faces_2(self.roi_pool2(x2, face2)),
+                          self.l2norm_faces_3(self.roi_pool3(x3, face3))), 1)
+
+        # faces = self.l2norm_fc_2(faces)
+        face = self.conv1x1_faces(face)
+        face = face.view(face.size()[0], -1)
 
         # TODO: add dropout layer?
-        temp = torch.cat((self.fc1(bodies), self.fc2(faces)), 0)
-        scores = F.softmax(self.scores_fc(temp))
-        bbox_pred = self.bbox_fc(temp)
+        face = torch.cat((self.fc1(body), self.fc2(face)), 1)
+        cls_prob = F.softmax(self.score_fc(face))
+        bbox_pred = self.bbox_fc(face)
 
         if self.training:
-            self.cross_entropy, self.loss_box = self.build_loss(scores, bbox_pred, roi_data)
+            self.cross_entropy, self.loss_box = self.build_loss(cls_prob, bbox_pred, roi_data)
 
-        return scores, bbox_pred, rois
+        return cls_prob, bbox_pred, rois
 
     @property
     def loss(self):
@@ -303,7 +282,7 @@ class CMSRCNN(nn.Module):
         return blob, np.array(im_scale_factors)
 
     def get_image_blob(self, im):
-        """Converts an image into a network input.
+        """Converts an image into a  network input.
         Arguments:
             im (ndarray): a color image in BGR order
         Returns:
@@ -336,23 +315,100 @@ class CMSRCNN(nn.Module):
 
         return blob, np.array(im_scale_factors)
 
-    def load_from_npz(self, params):
-        self.rpn.load_from_npz(params)
+    @staticmethod
+    def project_into_feature_maps(feature_maps, rois, im_info):
+        """
+        project RPN outputs on feature maps and return the head with the body
+        tx = (xb-xf)/wf
+        ty = (yb-yf)/hf
+        tw = log(wb/wf)
+        th = log(hb/hf)
+        tx, ty, tw, and th are fixed
+        x, y, h, w are center_x, center_y, height and width
+        b, and f stand for body and face respectively
+        :param feature_maps:
+        :param rois: regions of interests
+        :param im_info: image info [ width, height, scale ]
+        :return: faces, bodies
+        """
 
-        pairs = {'fc6.fc': 'fc6', 'fc7.fc': 'fc7', 'score_fc.fc': 'cls_score', 'bbox_fc.fc': 'bbox_pred'}
-        own_dict = self.state_dict()
-        for k, v in list(pairs.items()):
-            key = '{}.weight'.format(k)
-            param = torch.from_numpy(params['{}/weights:0'.format(v)]).permute(1, 0)
-            own_dict[key].copy_(param)
+        tx, ty, tw, th = 1, 1, 1, 1
 
-            key = '{}.bias'.format(k)
-            param = torch.from_numpy(params['{}/biases:0'.format(v)])
-            own_dict[key].copy_(param)
+        _, _, w, h = feature_maps.size()
+        bboxes = rois
 
-    def load_from_rcnn(self, rcnn_model_path):
-        detector = FasterRCNN()
-        network.load_net(rcnn_model_path, detector)
+        # calculate the width and height of the face's bbox
+        face_width = bboxes[:, 3] - bboxes[:, 1]
+        face_height = bboxes[:, 4] - bboxes[:, 2]
 
-        self.rpn = detector.rpn
-        print(self.rpn.eval())
+        # center of the face
+        face_center_x = bboxes[:, 1] + face_width
+        face_center_y = bboxes[:, 2] + face_height
+
+        im_info = im_info[0]
+        # pooling size from the original image to current feature map
+        r1 = im_info[1] / w
+        r2 = im_info[0] / h
+
+        # faces
+        # bboxes[0::2] = max(min(bboxes[0::2] / r1, w), 0)
+        # bboxes[1::2] = max(min(bboxes[1::2] / r2, h), 0)
+        bboxes.data[:, 1::2] = torch.clamp(torch.round(bboxes.data[:, 1::2] / r1), max=w - 1, min=0)
+        bboxes.data[:, 2::2] = torch.clamp(torch.round(bboxes.data[:, 2::2] / r2), max=h - 1, min=0)
+        # bboxes = bboxes.clamp(min=0)
+
+        # bodies
+        b_bboxes = torch.autograd.Variable(torch.zeros(bboxes.size()))
+
+        # calculate body's center, width and height
+        body_width = face_width * np.exp(tw)
+        body_height = face_height * np.exp(th)
+        body_center_x = face_width * tx + face_center_x
+        body_center_y = face_height * ty + face_center_y
+
+        # calculate bbox points
+        b_bboxes[:, 1] = torch.clamp(torch.round(body_center_x - body_width / 2), max=w - 1, min=0)
+        b_bboxes[:, 3] = torch.clamp(torch.round(body_center_x + body_width / 2), max=w - 1, min=0)
+
+        b_bboxes[:, 2] = torch.clamp(torch.round(body_center_y - body_height / 2), max=h - 1, min=0)
+        b_bboxes[:, 4] = torch.clamp(torch.round(body_center_y + body_height / 2), max=h - 1, min=0)
+        # b_bboxes = b_bboxes.clamp(min=0)
+
+        # b_bboxes[0::2] = max(min(tx * face_width + face_center_x, w), 0)
+        # b_bboxes[1::2] = max(min(ty * face_height + face_center_y, h), 0)
+
+        # return feature_maps[:, bboxes[0]:bboxes[2], bboxes[1]: bboxes[3]], \
+        #             feature_maps[:, b_bboxes[0]:b_bboxes[2],b_bboxes[1]: b_bboxes[3]]
+
+        if rois.is_cuda:
+            bboxes = bboxes.cuda()
+            b_bboxes = b_bboxes.cuda()
+
+        return bboxes, b_bboxes
+
+    @staticmethod
+    def load_pretrained(path="models/cms.pth"):
+        return torch.load(path)
+
+    def load_faster_rcnn(self, path: str):
+        rcnn = torch.load(path)
+
+        self.seq1[0].weight = copy.deepcopy(rcnn[0].weight)
+        self.seq1[1].weight = copy.deepcopy(rcnn[2].weight)
+        self.seq1[3].weight = copy.deepcopy(rcnn[5].weight)
+        self.seq1[4].weight = copy.deepcopy(rcnn[7].weight)
+        self.seq1[6].weight = copy.deepcopy(rcnn[10].weight)
+        self.seq1[7].weight = copy.deepcopy(rcnn[12].weight)
+        self.seq1[8].weight = copy.deepcopy(rcnn[14].weight)
+
+        self.seq2[0].weight = copy.deepcopy(rcnn[17].weight)
+        self.seq2[1].weight = copy.deepcopy(rcnn[19].weight)
+        self.seq2[2].weight = copy.deepcopy(rcnn[21].weight)
+
+        self.seq3[0].weight = copy.deepcopy(rcnn[24].weight)
+        self.seq3[1].weight = copy.deepcopy(rcnn[26].weight)
+        self.seq3[2].weight = copy.deepcopy(rcnn[28].weight)
+
+        self.rpn.conv1.conv.weight = copy.deepcopy(rcnn[30].weight)
+        self.rpn.score_conv.conv.weight = copy.deepcopy(rcnn[32].weight)
+        self.rpn.bbox_conv.conv.weight = copy.deepcopy(rcnn[33].weight)

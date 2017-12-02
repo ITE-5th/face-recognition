@@ -5,17 +5,14 @@
 # Written by Ross Girshick and Sean Bell
 # --------------------------------------------------------
 
-import yaml
 import numpy as np
 import numpy.random as npr
-import pdb
 
-from ..utils.cython_bbox import bbox_overlaps, bbox_intersections
-
-# TODO: make fast_rcnn irrelevant
+from ..fast_rcnn.bbox_transform import bbox_transform
+# TODO: make CMS.faster_rcnn.fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
 from ..fast_rcnn.config import cfg
-from ..fast_rcnn.bbox_transform import bbox_transform
+from CMS.faster_rcnn.utils.cython_bbox import bbox_overlaps, bbox_intersections
 
 # <<<< obsolete
 
@@ -62,8 +59,7 @@ def proposal_target_layer(rpn_rois, gt_boxes, gt_ishard, dontcare_areas, _num_cl
     """
     jittered_gt_boxes = _jitter_gt_boxes(gt_easyboxes)
     zeros = np.zeros((gt_easyboxes.shape[0] * 2, 1), dtype=gt_easyboxes.dtype)
-    all_rois = np.vstack((all_rois, \
-                          np.hstack((zeros, np.vstack((gt_easyboxes[:, :-1], jittered_gt_boxes[:, :-1]))))))
+    all_rois = np.vstack((all_rois, np.hstack((zeros, np.vstack((gt_easyboxes[:, :-1], jittered_gt_boxes[:, :-1]))))))
 
     # Sanity check: single batch only
     assert np.all(all_rois[:, 0] == 0), \
@@ -171,7 +167,7 @@ def _sample_rois(all_rois, gt_boxes, gt_ishard, dontcare_areas, fg_rois_per_imag
     bg_rois_per_this_image = min(bg_rois_per_this_image, bg_inds.size)
     # Sample background regions without replacement
     if bg_inds.size > 0:
-        bg_inds = npr.choice(bg_inds, size=bg_rois_per_this_image, replace=False)
+        bg_inds = npr.choice(bg_inds, size=int(bg_rois_per_this_image), replace=False)
 
     # The indices that we're selecting (both fg and bg)
     keep_inds = np.append(fg_inds, bg_inds)
@@ -198,7 +194,7 @@ def _get_bbox_regression_labels(bbox_target_data, num_classes):
     compact form N x (class, tx, ty, tw, th)
 
     This function expands those targets into the 4-of-4*K representation used
-    by the network (i.e. only one class has non-zero targets).
+    by the .faster_rcnn.network (i.e. only one class has non-zero targets).
 
     Returns:
         bbox_target (ndarray): N x 4K blob of regression targets

@@ -1,22 +1,21 @@
-from . import imagenet3d
 import os
+import os
+import pickle
+
 import PIL
 import numpy as np
 import scipy.sparse
-import subprocess
-import pickle
-import math
-import sys
+from CMS.faster_rcnn.utils.cython_bbox import bbox_overlaps
+from CMS.faster_rcnn.rpn_msr.generate_anchors import generate_anchors
 
-from .imdb import imdb
+from CMS.faster_rcnn.utils.boxes_grid import get_boxes_grid
 from .imdb import ROOT_DIR
-from ..utils.cython_bbox import bbox_overlaps
-from ..utils.boxes_grid import get_boxes_grid
-
-# TODO: make fast_rcnn irrelevant
+from .imdb import imdb
+# TODO: make CMS.faster_rcnn.fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
 from ..fast_rcnn.config import cfg
-from ..rpn_msr.generate_anchors import generate_anchors
+
+
 # <<<< obsolete
 
 
@@ -25,22 +24,22 @@ class imagenet3d(imdb):
         imdb.__init__(self, 'imagenet3d_' + image_set)
         self._image_set = image_set
         self._imagenet3d_path = self._get_default_path() if imagenet3d_path is None \
-                            else imagenet3d_path
+            else imagenet3d_path
         self._data_path = os.path.join(self._imagenet3d_path, 'Images')
         self._classes = ('__background__', 'aeroplane', 'ashtray', 'backpack', 'basket', \
-             'bed', 'bench', 'bicycle', 'blackboard', 'boat', 'bookshelf', 'bottle', 'bucket', \
-             'bus', 'cabinet', 'calculator', 'camera', 'can', 'cap', 'car', 'cellphone', 'chair', \
-             'clock', 'coffee_maker', 'comb', 'computer', 'cup', 'desk_lamp', 'diningtable', \
-             'dishwasher', 'door', 'eraser', 'eyeglasses', 'fan', 'faucet', 'filing_cabinet', \
-             'fire_extinguisher', 'fish_tank', 'flashlight', 'fork', 'guitar', 'hair_dryer', \
-             'hammer', 'headphone', 'helmet', 'iron', 'jar', 'kettle', 'key', 'keyboard', 'knife', \
-             'laptop', 'lighter', 'mailbox', 'microphone', 'microwave', 'motorbike', 'mouse', \
-             'paintbrush', 'pan', 'pen', 'pencil', 'piano', 'pillow', 'plate', 'pot', 'printer', \
-             'racket', 'refrigerator', 'remote_control', 'rifle', 'road_pole', 'satellite_dish', \
-             'scissors', 'screwdriver', 'shoe', 'shovel', 'sign', 'skate', 'skateboard', 'slipper', \
-             'sofa', 'speaker', 'spoon', 'stapler', 'stove', 'suitcase', 'teapot', 'telephone', \
-             'toaster', 'toilet', 'toothbrush', 'train', 'trash_bin', 'trophy', 'tub', 'tvmonitor', \
-             'vending_machine', 'washing_machine', 'watch', 'wheelchair')
+                         'bed', 'bench', 'bicycle', 'blackboard', 'boat', 'bookshelf', 'bottle', 'bucket', \
+                         'bus', 'cabinet', 'calculator', 'camera', 'can', 'cap', 'car', 'cellphone', 'chair', \
+                         'clock', 'coffee_maker', 'comb', 'computer', 'cup', 'desk_lamp', 'diningtable', \
+                         'dishwasher', 'door', 'eraser', 'eyeglasses', 'fan', 'faucet', 'filing_cabinet', \
+                         'fire_extinguisher', 'fish_tank', 'flashlight', 'fork', 'guitar', 'hair_dryer', \
+                         'hammer', 'headphone', 'helmet', 'iron', 'jar', 'kettle', 'key', 'keyboard', 'knife', \
+                         'laptop', 'lighter', 'mailbox', 'microphone', 'microwave', 'motorbike', 'mouse', \
+                         'paintbrush', 'pan', 'pen', 'pencil', 'piano', 'pillow', 'plate', 'pot', 'printer', \
+                         'racket', 'refrigerator', 'remote_control', 'rifle', 'road_pole', 'satellite_dish', \
+                         'scissors', 'screwdriver', 'shoe', 'shovel', 'sign', 'skate', 'skateboard', 'slipper', \
+                         'sofa', 'speaker', 'spoon', 'stapler', 'stove', 'suitcase', 'teapot', 'telephone', \
+                         'toaster', 'toilet', 'toothbrush', 'train', 'trash_bin', 'trophy', 'tub', 'tvmonitor', \
+                         'vending_machine', 'washing_machine', 'watch', 'wheelchair')
         self._class_to_ind = dict(list(zip(self.classes, list(range(self.num_classes)))))
         self._image_ext = '.JPEG'
         self._image_index = self._load_image_set_index()
@@ -58,9 +57,9 @@ class imagenet3d(imdb):
         self._num_boxes_proposal = 0
 
         assert os.path.exists(self._imagenet3d_path), \
-                'imagenet3d path does not exist: {}'.format(self._imagenet3d_path)
+            'imagenet3d path does not exist: {}'.format(self._imagenet3d_path)
         assert os.path.exists(self._data_path), \
-                'Path does not exist: {}'.format(self._data_path)
+            'Path does not exist: {}'.format(self._data_path)
 
     def image_path_at(self, i):
         """
@@ -75,7 +74,7 @@ class imagenet3d(imdb):
 
         image_path = os.path.join(self._data_path, index + self._image_ext)
         assert os.path.exists(image_path), \
-                'Path does not exist: {}'.format(image_path)
+            'Path does not exist: {}'.format(image_path)
         return image_path
 
     def _load_image_set_index(self):
@@ -84,7 +83,7 @@ class imagenet3d(imdb):
         """
         image_set_file = os.path.join(self._imagenet3d_path, 'Image_sets', self._image_set + '.txt')
         assert os.path.exists(image_set_file), \
-                'Path does not exist: {}'.format(image_set_file)
+            'Path does not exist: {}'.format(image_set_file)
 
         with open(image_set_file) as f:
             image_index = [x.rstrip('\n') for x in f.readlines()]
@@ -95,7 +94,6 @@ class imagenet3d(imdb):
         Return the default path where imagenet3d is expected to be installed.
         """
         return os.path.join(ROOT_DIR, 'data', 'ImageNet3D')
-
 
     def gt_roidb(self):
         """
@@ -119,14 +117,14 @@ class imagenet3d(imdb):
             for i in range(1, self.num_classes):
                 print('{}: Total number of boxes {:d}'.format(self.classes[i], self._num_boxes_all[i]))
                 print('{}: Number of boxes covered {:d}'.format(self.classes[i], self._num_boxes_covered[i]))
-                print('{}: Recall {:f}'.format(self.classes[i], float(self._num_boxes_covered[i]) / float(self._num_boxes_all[i])))
+                print('{}: Recall {:f}'.format(self.classes[i],
+                                               float(self._num_boxes_covered[i]) / float(self._num_boxes_all[i])))
 
         with open(cache_file, 'wb') as fid:
             pickle.dump(gt_roidb, fid, pickle.HIGHEST_PROTOCOL)
         print('wrote gt roidb to {}'.format(cache_file))
 
         return gt_roidb
-
 
     def _load_imagenet3d_annotation(self, index):
         """
@@ -145,7 +143,7 @@ class imagenet3d(imdb):
         num_objs = len(lines)
 
         boxes = np.zeros((num_objs, 4), dtype=np.float32)
-        viewpoints = np.zeros((num_objs, 3), dtype=np.float32)          # azimuth, elevation, in-plane rotation
+        viewpoints = np.zeros((num_objs, 3), dtype=np.float32)  # azimuth, elevation, in-plane rotation
         viewpoints_flipped = np.zeros((num_objs, 3), dtype=np.float32)  # azimuth, elevation, in-plane rotation
         gt_classes = np.zeros((num_objs), dtype=np.int32)
         overlaps = np.zeros((num_objs, self.num_classes), dtype=np.float32)
@@ -161,7 +159,7 @@ class imagenet3d(imdb):
                 viewpoints[ix, :] = [float(n) for n in words[5:8]]
                 # flip the viewpoint
                 viewpoints_flipped[ix, 0] = -viewpoints[ix, 0]  # azimuth
-                viewpoints_flipped[ix, 1] = viewpoints[ix, 1]   # elevation
+                viewpoints_flipped[ix, 1] = viewpoints[ix, 1]  # elevation
                 viewpoints_flipped[ix, 2] = -viewpoints[ix, 2]  # in-plane rotation
             else:
                 viewpoints[ix, :] = np.inf
@@ -205,14 +203,15 @@ class imagenet3d(imdb):
 
                 # compute overlap
                 overlaps_grid = bbox_overlaps(boxes_grid.astype(np.float), boxes_all.astype(np.float))
-        
+
                 # check how many gt boxes are covered by grids
                 if num_objs != 0:
                     index = np.tile(list(range(num_objs)), len(cfg.TRAIN.SCALES))
-                    max_overlaps = overlaps_grid.max(axis = 0)
+                    max_overlaps = overlaps_grid.max(axis=0)
                     fg_inds = []
                     for k in range(1, self.num_classes):
-                        fg_inds.extend(np.where((gt_classes_all == k) & (max_overlaps >= cfg.TRAIN.FG_THRESH[k-1]))[0])
+                        fg_inds.extend(
+                            np.where((gt_classes_all == k) & (max_overlaps >= cfg.TRAIN.FG_THRESH[k - 1]))[0])
                     index_covered = np.unique(index[fg_inds])
 
                     for i in range(self.num_classes):
@@ -251,7 +250,7 @@ class imagenet3d(imdb):
                 shift_y = np.arange(0, height) * feat_stride
                 shift_x, shift_y = np.meshgrid(shift_x, shift_y)
                 shifts = np.vstack((shift_x.ravel(), shift_y.ravel(),
-                            shift_x.ravel(), shift_y.ravel())).transpose()
+                                    shift_x.ravel(), shift_y.ravel())).transpose()
                 # add A anchors (1, A, 4) to
                 # cell K shifts (K, 1, 4) to get
                 # shift anchors (K, A, 4)
@@ -263,19 +262,19 @@ class imagenet3d(imdb):
 
                 # compute overlap
                 overlaps_grid = bbox_overlaps(all_anchors.astype(np.float), gt_boxes.astype(np.float))
-        
+
                 # check how many gt boxes are covered by anchors
                 if num_objs != 0:
-                    max_overlaps = overlaps_grid.max(axis = 0)
+                    max_overlaps = overlaps_grid.max(axis=0)
                     fg_inds = []
                     for k in range(1, self.num_classes):
-                        fg_inds.extend(np.where((gt_classes == k) & (max_overlaps >= cfg.TRAIN.FG_THRESH[k-1]))[0])
+                        fg_inds.extend(np.where((gt_classes == k) & (max_overlaps >= cfg.TRAIN.FG_THRESH[k - 1]))[0])
 
                     for i in range(self.num_classes):
                         self._num_boxes_all[i] += len(np.where(gt_classes == i)[0])
                         self._num_boxes_covered[i] += len(np.where(gt_classes[fg_inds] == i)[0])
 
-        return {'boxes' : boxes,
+        return {'boxes': boxes,
                 'gt_classes': gt_classes,
                 'gt_viewpoints': viewpoints,
                 'gt_viewpoints_flipped': viewpoints_flipped,
@@ -287,11 +286,10 @@ class imagenet3d(imdb):
                 'gt_viewindexes_rotation_flipped': viewindexes_rotation_flipped,
                 'gt_subclasses': gt_subclasses,
                 'gt_subclasses_flipped': gt_subclasses_flipped,
-                'gt_overlaps' : overlaps,
+                'gt_overlaps': overlaps,
                 'gt_subindexes': subindexes,
                 'gt_subindexes_flipped': subindexes_flipped,
-                'flipped' : False}
-
+                'flipped': False}
 
     def region_proposal_roidb(self):
         """
@@ -312,16 +310,16 @@ class imagenet3d(imdb):
         if self._image_set != 'test':
             gt_roidb = self.gt_roidb()
 
-            print('Loading region proposal network boxes...')
+            print('Loading region proposal .faster_rcnn.network boxes...')
             model = cfg.REGION_PROPOSAL
             rpn_roidb = self._load_rpn_roidb(gt_roidb, model)
-            print('Region proposal network boxes loaded')
+            print('Region proposal .faster_rcnn.network boxes loaded')
             roidb = imdb.merge_roidbs(rpn_roidb, gt_roidb)
         else:
-            print('Loading region proposal network boxes...')
+            print('Loading region proposal .faster_rcnn.network boxes...')
             model = cfg.REGION_PROPOSAL
             roidb = self._load_rpn_roidb(None, model)
-            print('Region proposal network boxes loaded')
+            print('Region proposal .faster_rcnn.network boxes loaded')
 
         print('{} region proposals per image'.format(self._num_boxes_proposal / len(self.image_index)))
 
@@ -331,7 +329,8 @@ class imagenet3d(imdb):
                 print('{}: Total number of boxes {:d}'.format(self.classes[i], self._num_boxes_all[i]))
                 print('{}: Number of boxes covered {:d}'.format(self.classes[i], self._num_boxes_covered[i]))
                 if self._num_boxes_all[i] > 0:
-                    print('{}: Recall {:f}'.format(self.classes[i], float(self._num_boxes_covered[i]) / float(self._num_boxes_all[i])))
+                    print('{}: Recall {:f}'.format(self.classes[i],
+                                                   float(self._num_boxes_covered[i]) / float(self._num_boxes_all[i])))
 
         with open(cache_file, 'wb') as fid:
             pickle.dump(roidb, fid, pickle.HIGHEST_PROTOCOL)
@@ -376,7 +375,7 @@ class imagenet3d(imdb):
             raw_data[:, 1] = y1
             raw_data[:, 2] = x2
             raw_data[:, 3] = y2
-            raw_data = raw_data[inds,:4]
+            raw_data = raw_data[inds, :4]
 
             self._num_boxes_proposal += raw_data.shape[0]
             box_list.append(raw_data)
@@ -390,17 +389,16 @@ class imagenet3d(imdb):
                 overlaps = bbox_overlaps(raw_data.astype(np.float), boxes.astype(np.float))
                 # check how many gt boxes are covered by anchors
                 if raw_data.shape[0] != 0:
-                    max_overlaps = overlaps.max(axis = 0)
+                    max_overlaps = overlaps.max(axis=0)
                     fg_inds = []
                     for k in range(1, self.num_classes):
-                        fg_inds.extend(np.where((gt_classes == k) & (max_overlaps >= cfg.TRAIN.FG_THRESH[k-1]))[0])
+                        fg_inds.extend(np.where((gt_classes == k) & (max_overlaps >= cfg.TRAIN.FG_THRESH[k - 1]))[0])
 
                     for i in range(self.num_classes):
                         self._num_boxes_all[i] += len(np.where(gt_classes == i)[0])
                         self._num_boxes_covered[i] += len(np.where(gt_classes[fg_inds] == i)[0])
 
         return self.create_roidb_from_box_list(box_list, gt_roidb)
-
 
     def evaluate_detections(self, all_boxes, output_dir):
 
@@ -418,8 +416,9 @@ class imagenet3d(imdb):
                         continue
                     # detection and viewpoint
                     for k in range(dets.shape[0]):
-                        f.write('{:s} {:f} {:f} {:f} {:f} {:.32f} {:f} {:f} {:f}\n'.format(\
-                                 cls, dets[k, 0], dets[k, 1], dets[k, 2], dets[k, 3], dets[k, 4], dets[k, 6], dets[k, 7], dets[k, 8]))
+                        f.write('{:s} {:f} {:f} {:f} {:f} {:.32f} {:f} {:f} {:f}\n'.format( \
+                            cls, dets[k, 0], dets[k, 1], dets[k, 2], dets[k, 3], dets[k, 4], dets[k, 6], dets[k, 7],
+                            dets[k, 8]))
 
     # write detection results into one file
     def evaluate_detections_one_file(self, all_boxes, output_dir):
@@ -439,8 +438,9 @@ class imagenet3d(imdb):
                         continue
                     # detection and viewpoint
                     for k in range(dets.shape[0]):
-                        f.write('{:s} {:f} {:f} {:f} {:f} {:.32f} {:f} {:f} {:f}\n'.format(\
-                                 index, dets[k, 0], dets[k, 1], dets[k, 2], dets[k, 3], dets[k, 4], dets[k, 6], dets[k, 7], dets[k, 8]))
+                        f.write('{:s} {:f} {:f} {:f} {:f} {:.32f} {:f} {:f} {:f}\n'.format( \
+                            index, dets[k, 0], dets[k, 1], dets[k, 2], dets[k, 3], dets[k, 4], dets[k, 6], dets[k, 7],
+                            dets[k, 8]))
 
     def evaluate_proposals(self, all_boxes, output_dir):
         # for each image
@@ -456,8 +456,8 @@ class imagenet3d(imdb):
                     if dets == []:
                         continue
                     for k in range(dets.shape[0]):
-                        f.write('{:f} {:f} {:f} {:f} {:.32f}\n'.format(\
-                                 dets[k, 0], dets[k, 1], dets[k, 2], dets[k, 3], dets[k, 4]))
+                        f.write('{:f} {:f} {:f} {:f} {:.32f}\n'.format( \
+                            dets[k, 0], dets[k, 1], dets[k, 2], dets[k, 3], dets[k, 4]))
 
     def evaluate_proposals_msr(self, all_boxes, output_dir):
         # for each image
@@ -469,10 +469,13 @@ class imagenet3d(imdb):
                 if dets == []:
                     continue
                 for k in range(dets.shape[0]):
-                    f.write('{:f} {:f} {:f} {:f} {:.32f}\n'.format(dets[k, 0], dets[k, 1], dets[k, 2], dets[k, 3], dets[k, 4]))
+                    f.write('{:f} {:f} {:f} {:f} {:.32f}\n'.format(dets[k, 0], dets[k, 1], dets[k, 2], dets[k, 3],
+                                                                   dets[k, 4]))
 
 
 if __name__ == '__main__':
     d = imagenet3d('trainval')
     res = d.roidb
-    from IPython import embed; embed()
+    from IPython import embed;
+
+    embed()

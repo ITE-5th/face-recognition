@@ -10,7 +10,7 @@ import glob
 from .imdb import imdb
 from .imdb import ROOT_DIR
 
-# TODO: make fast_rcnn irrelevant
+# TODO: make CMS.faster_rcnn.fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
 from ..fast_rcnn.config import cfg
 # <<<< obsolete
@@ -121,10 +121,10 @@ class nthu(imdb):
             print '{} roidb loaded from {}'.format(self.name, cache_file)
             return roidb
 
-        print 'Loading region proposal network boxes...'
+        print 'Loading region proposal  network boxes...'
         model = cfg.REGION_PROPOSAL
         roidb = self._load_rpn_roidb(None, model)
-        print 'Region proposal network boxes loaded'
+        print 'Region proposal  network boxes loaded'
         print '{} region proposals per image'.format(self._num_boxes_proposal / len(self.image_index))
 
         with open(cache_file, 'wb') as fid:

@@ -8,7 +8,7 @@
 import numpy as np
 import numpy.random as npr
 
-# TODO: make fast_rcnn irrelevant
+# TODO: make CMS.faster_rcnn.fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
 
 # <<<< obsolete

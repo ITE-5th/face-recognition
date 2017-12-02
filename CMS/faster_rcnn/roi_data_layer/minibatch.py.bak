@@ -5,18 +5,18 @@
 # Written by Ross Girshick
 # --------------------------------------------------------
 
-"""Compute minibatch blobs for training a Fast R-CNN network."""
+"""Compute minibatch blobs for training a Fast R-CNN  network."""
 
 import numpy as np
 import numpy.random as npr
 import cv2
 import os
 
-# TODO: make fast_rcnn irrelevant
+# TODO: make CMS.faster_rcnn.fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
 from ..fast_rcnn.config import cfg
 # <<<< obsolete
-from ..utils.blob import prep_im_for_blob, im_list_to_blob
+from utils.blob import prep_im_for_blob, im_list_to_blob
 
 def get_minibatch(roidb, num_classes):
     """Given a roidb, construct a minibatch sampled from it."""
@@ -170,7 +170,7 @@ def _get_bbox_regression_labels(bbox_target_data, num_classes):
     roidb.
 
     This function expands those targets into the 4-of-4*K representation used
-    by the network (i.e. only one class has non-zero targets). The loss weights
+    by the  network (i.e. only one class has non-zero targets). The loss weights
     are similarly expanded.
 
     Returns:

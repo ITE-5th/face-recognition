@@ -7,7 +7,7 @@
 
 import numpy as np
 import math
-# TODO: make fast_rcnn irrelevant
+# TODO: make CMS.faster_rcnn.fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
 from ..fast_rcnn.config import cfg
 # <<<< obsolete
@@ -40,7 +40,7 @@ def get_boxes_grid(image_height, image_width):
         width = np.floor(width / 2.0 + 0.5)
         width = np.floor(width / 2.0 + 0.5)
     else:
-        assert (1), 'The network architecture is not supported in utils.get_boxes_grid!'
+        assert (1), 'The .faster_rcnn. .faster_rcnn.network architecture is not supported in utils.get_boxes_grid!'
 
     # compute the grid box centers
     h = np.arange(height)

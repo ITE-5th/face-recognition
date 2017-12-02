@@ -7,16 +7,16 @@
 
 """Transform a roidb into a trainable roidb by adding a bunch of metadata."""
 
-import numpy as np
-
 import PIL
+import numpy as np
+# <<<< obsolete
+from CMS.faster_rcnn.utils.cython_bbox import bbox_overlaps
 
-# TODO: make fast_rcnn irrelevant
+from ..fast_rcnn.bbox_transform import bbox_transform
+# TODO: make CMS.faster_rcnn.fast_rcnn irrelevant
 # >>>> obsolete, because it depends on sth outside of this project
 from ..fast_rcnn.config import cfg
-from ..fast_rcnn.bbox_transform import bbox_transform
-# <<<< obsolete
-from ..utils.cython_bbox import bbox_overlaps
+
 
 def prepare_roidb(imdb):
     """Enrich the imdb's roidb by adding some derived quantities that
@@ -48,6 +48,7 @@ def prepare_roidb(imdb):
         nonzero_inds = np.where(max_overlaps > 0)[0]
         assert all(max_classes[nonzero_inds] != 0)
 
+
 def add_bbox_regression_targets(roidb):
     """
     Add information needed to train bounding-box regressors.
@@ -65,14 +66,14 @@ def add_bbox_regression_targets(roidb):
         max_overlaps = roidb[im_i]['max_overlaps']
         max_classes = roidb[im_i]['max_classes']
         roidb[im_i]['bbox_targets'] = \
-                _compute_targets(rois, max_overlaps, max_classes)
+            _compute_targets(rois, max_overlaps, max_classes)
 
     if cfg.TRAIN.BBOX_NORMALIZE_TARGETS_PRECOMPUTED:
         # Use fixed / precomputed "means" and "stds" instead of empirical values
         means = np.tile(
-                np.array(cfg.TRAIN.BBOX_NORMALIZE_MEANS), (num_classes, 1))
+            np.array(cfg.TRAIN.BBOX_NORMALIZE_MEANS), (num_classes, 1))
         stds = np.tile(
-                np.array(cfg.TRAIN.BBOX_NORMALIZE_STDS), (num_classes, 1))
+            np.array(cfg.TRAIN.BBOX_NORMALIZE_STDS), (num_classes, 1))
     else:
         # Compute values needed for means and stds
         # var(x) = E(x^2) - E(x)^2
@@ -87,7 +88,7 @@ def add_bbox_regression_targets(roidb):
                     class_counts[cls] += cls_inds.size
                     sums[cls, :] += targets[cls_inds, 1:].sum(axis=0)
                     squared_sums[cls, :] += \
-                            (targets[cls_inds, 1:] ** 2).sum(axis=0)
+                        (targets[cls_inds, 1:] ** 2).sum(axis=0)
 
         means = sums / class_counts
         stds = np.sqrt(squared_sums / class_counts - means ** 2)
@@ -97,10 +98,10 @@ def add_bbox_regression_targets(roidb):
 
     print('bbox target means:')
     print(means)
-    print(means[1:, :].mean(axis=0)) # ignore bg class
+    print(means[1:, :].mean(axis=0))  # ignore bg class
     print('bbox target stdevs:')
     print(stds)
-    print(stds[1:, :].mean(axis=0)) # ignore bg class
+    print(stds[1:, :].mean(axis=0))  # ignore bg class
 
     # Normalize targets
     if cfg.TRAIN.BBOX_NORMALIZE_TARGETS:
@@ -117,6 +118,7 @@ def add_bbox_regression_targets(roidb):
     # These values will be needed for making predictions
     # (the predicts will need to be unnormalized and uncentered)
     return means.ravel(), stds.ravel()
+
 
 def _compute_targets(rois, overlaps, labels):
     """
