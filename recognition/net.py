@@ -20,7 +20,7 @@ extractor = extractor.cuda()
 
 
 class Net(nn.Module):
-    def __init__(self, num_classes, vgg_face: bool = True):
+    def __init__(self, num_classes, vgg_face: bool = False):
         super().__init__()
         self.num_classes = num_classes
         self.linear1 = nn.Linear(2622 if vgg_face else 1536, 150)
@@ -28,8 +28,6 @@ class Net(nn.Module):
         self.linear2 = nn.Linear(150, num_classes)
 
     def forward(self, x):
-        x = extractor.forward(x)
-        x = x.view(x.size(0), -1)
         x = F.relu(self.linear1(x))
         x = self.dropout(x)
         x = self.linear2(x)

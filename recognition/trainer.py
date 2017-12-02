@@ -1,5 +1,5 @@
 import glob
-import time
+import os
 from multiprocessing import cpu_count
 
 import numpy as np
@@ -14,6 +14,7 @@ from torch.utils.data import DataLoader
 from evm.evm import EVM
 from preprocessing.preprocessor import to_tensor
 from recognition.face_recognition_dataset import FaceRecognitionDataset
+from recognition.image_feature_extractor import ImageFeatureExtractor
 from recognition.net import Net
 
 
@@ -24,14 +25,14 @@ def save_checkpoint(state, filename='checkpoint.pth.tar'):
 faces_image_path = "../data/lfw2/"
 use_evm = False
 if not use_evm:
-    batch_size = 256
-    dataset = FaceRecognitionDataset(faces_image_path, vgg_face=False)
+    batch_size = 1024
+    dataset = FaceRecognitionDataset(faces_image_path)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=cpu_count())
-    l = len(dataset.names)
-    net = Net(l, vgg_face=False)
+    l = len(os.listdir(faces_image_path))
+    net = Net(l)
     net = nn.DataParallel(net).cuda()
     criterion = nn.CrossEntropyLoss().cuda()
-    optimizer = Adam(filter(lambda x: x.requires_grad, net.parameters()), lr=0.001)
+    optimizer = Adam(filter(lambda x: x.requires_grad, net.parameters()), lr=0.01)
     epochs = 100
     batch_loss, total_loss = 0, 0
     batches = 0
@@ -56,29 +57,17 @@ if not use_evm:
         total_loss, batches = 0, 0
 else:
     # TODO: review :)
-    faces = glob.glob("./data/lfw2/**/*.jpg")
-    features = []
-    types = list(set([face[face.rfind("/") + 1:face[face.rfind("_")]] for face in faces]))
-    labels = []
-    for face in faces:
-        image = to_tensor(face)
-        image = image.unsqueeze(0)
-        # feature = extractor(image)
-        feature = feature.squeeze(0)
-        features.append(feature.numpy())
-        labels.append(types.index(face[face.rfind("/") + 1:face.rfind("_")]))
-    features = np.array(features)
-    labels = np.array(labels)
-    X_train, X_test, y_train, y_test = train_test_split(features, labels, random_state=42)
-
+    features = ImageFeatureExtractor.load("./data")
+    X, y = zip(*features)
+    X, y = np.array([x.numpy() for x in X]), np.array(y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
     print("number of training samples = {}, obviously choosing a small tail will yield a very bad result".format(
         X_train.shape[0]))
     estimator = EVM(open_set_threshold=0)
-    params = {"tail": [1000, 4000, 10000, 14000]}
+    params = {"tail": [1000, 4000, 8000]}
     grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
     grid.fit(X_train, y_train)
     best_estimator = grid.best_estimator_
     predicted = best_estimator.predict(X_test)
     accuracy = (predicted == y_test).sum() * 100 / X_test.shape[0]
     print("best accuracy = {}".format(accuracy))
-    pass
