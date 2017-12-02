@@ -171,11 +171,11 @@ if __name__ == '__main__':
 
     print("number of training samples = {}, obviously choosing a small tail will yield a very bad result".format(
         X_train.shape[0]))
-    estimator = EVM(open_set_threshold=0.5)
+    estimator = EVM(open_set_threshold=0)
     params = {"tail_size": [700]}
     grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
     grid.fit(X_train, y_train)
-    best = grid.best_estimator_
-    predicted = best.predict(X_test)
+    best_estimator = grid.best_estimator_
+    predicted = best_estimator.predict(X_test)
     accuracy = (predicted == y_test).sum() * 100 / X_test.shape[0]
     print("best accuracy = {}".format(accuracy))
