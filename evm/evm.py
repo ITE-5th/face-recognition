@@ -4,7 +4,7 @@ from multiprocessing import Pool, cpu_count
 import numpy as np
 from scipy.spatial.distance import cdist
 from sklearn.base import BaseEstimator
-from sklearn.datasets import load_iris, load_digits
+from sklearn.datasets import load_digits
 from sklearn.externals import joblib
 from sklearn.metrics import make_scorer, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
@@ -15,8 +15,7 @@ class EVM(BaseEstimator):
                  tail: int = 100,
                  open_set_threshold: float = 0.5,
                  k: int = 5,
-                 with_reduction: bool = False,
-                 redundancy_rate: float = 0.5,
+                 redundancy_rate: float = 0,
                  n_jobs: int = cpu_count()):
         super().__init__()
         self.tail = tail
@@ -25,7 +24,6 @@ class EVM(BaseEstimator):
         self.open_set_threshold = open_set_threshold
         self.k = k
         self.redundancy_rate = redundancy_rate
-        self.with_reduction = with_reduction
         self.max_class = 0
         self.n_jobs = n_jobs
 
@@ -37,7 +35,7 @@ class EVM(BaseEstimator):
         for i in range(max_class + 1):
             self.classes[i] = X[y == i]
         self._infer()
-        if self.with_reduction:
+        if self.redundancy_rate > 0:
             self._reduce()
 
     def fit_new_data(self, X, y):
