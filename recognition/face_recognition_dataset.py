@@ -10,25 +10,18 @@ from preprocessing.preprocessor import Preprocessor
 
 
 class FaceRecognitionDataset(Dataset):
-    def __init__(self, root_path: str, preprocessor: Preprocessor = None):
+    def __init__(self, root_path: str, preprocessor: Preprocessor = None, vgg_face : bool=True):
+        self.vgg_face = vgg_face
         self.preprocessor = preprocessor
-        self.names = [path for path in os.listdir(root_path)]
+        self.names = list(set([path for path in os.listdir(root_path)]))
         faces_path = glob.glob(root_path + "/**/*.jpg")
-        with Pool(cpu_count()) as p:
-            self.faces = p.map(self.extract_item, faces_path)
-            p.close()
-            p.join()
-
-    # def __init__(self):
-    #     self.preprocessor = None
-    #     self.names = ["Aaron_Eckhart", "Aaron_Guiel", "Abdullah", "Abudl_Rahman"]
-    #     faces_path = glob.glob("../data/lfw2/**/*.jpg")
-    #     faces_path = [path for path in faces_path if self.extract_name(path) in self.names]
-    #     # self.faces = [self.extract_item(item) for item in faces_path]
-    #     with Pool(cpu_count()) as p:
-    #         self.faces = p.map(self.extract_item, faces_path)
-    #         p.close()
-    #         p.join()
+        # with Pool(cpu_count()) as p:
+        #     self.faces = p.map(self.extract_item, faces_path)
+        #     p.close()
+        #     p.join()
+        self.faces = []
+        for face in faces_path:
+            self.faces.append(self.extract_item(face))
 
     def __len__(self):
         return len(self.faces)
@@ -51,6 +44,8 @@ class FaceRecognitionDataset(Dataset):
 
     def prepare_image(self, image_path: str):
         image = cv2.imread(image_path)
+        if self.vgg_face:
+            image = cv2.resize(image, (224, 224))
         if self.preprocessor is None:
             image = np.swapaxes(image, 0, 2)
             image = np.swapaxes(image, 1, 2)
