@@ -17,7 +17,8 @@ class L2Norm(torch.nn.Module):
         bs, c, h, w = x.size()
         input_data = x.view(bs, c, -1)
 
-        denominator = input_data.view(bs, -1).norm(2, 1)
+        # TODO: modify 1e-8 to not divide by zero
+        denominator = input_data.view(bs, -1).norm(2, 1) + 1e-8
 
         x_bar = input_data / denominator.view(bs, 1, 1)
         assert x_bar.size() == input_data.size()

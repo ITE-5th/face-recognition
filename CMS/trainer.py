@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -7,9 +6,10 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 
 from CMS.dataset.face_detection_dataset import FaceDetectionDataset
-from CMS.temp_cms import CMSRCNN
+from CMS.minibatch_cms import CMSRCNN
 from CMS.transforms.mean_subtract_transform import MeanSubtract
 from CMS.transforms.scale_transform import Scale
+from faster_rcnn.fast_rcnn.config import cfg
 
 
 def save_checkpoint(state, filename='checkpoint.pth.tar'):
@@ -21,7 +21,7 @@ json_path = "./data/wider_face_split/wider_face_train_bbx_gt.json"
 
 transformer = Compose([MeanSubtract(), Scale()])
 dataset = FaceDetectionDataset(json_file=json_path, root_dir=faces_image_path, transform=transformer)
-dataloader = DataLoader(dataset, batch_size=16, shuffle=True, num_workers=1)
+dataloader = DataLoader(dataset, batch_size=cfg.TRAIN.IMS_PER_BATCH, shuffle=True, num_workers=1)
 net = CMSRCNN()
 net = nn.DataParallel(net).cuda()
 optimizer = Adam(filter(lambda x: x.requires_grad, net.parameters()), lr=0.001)
@@ -42,30 +42,14 @@ for epoch in range(epochs):
         # np.empty((len(bboxes), bboxes_count, 5))
 
         for i in range(len(bboxes)):
-            temp.append(bboxes[:, :bboxes_count[i]])
-
-        # bboxes = bboxes.reshape((g, -1, 5))
-
-        # temp = np.empty((0, 0))
-        #
-        # bboxes = bboxes[:, bboxes != -1].reshape((len(bboxes), -1, 5))
-        #
-        # for i in range(len(bboxes)):
-        #     bboxes[i,:,:] = bboxes[i, :bboxes_count[i], :]
-        # for i in range(len(bboxes)):
-        #     temp = np.append(temp, [[bboxes[i, :bboxes_count[i], :]]])
-        # bboxes = np.vsplit(bboxes, bboxes_count)
+            temp.append(bboxes[i, :bboxes_count[i]])
 
         bboxes = temp
-        # bboxes = np.array(temp, dtype=object)
         inputs = Variable(inputs.cuda())
-        # bboxes = Variable(bboxes.cuda())
 
         optimizer.zero_grad()
-        # def forward(self, im_data, im_info, gt_boxes=None, gt_ishard=None, dontcare_areas=None):
         outputs = net(inputs, info.numpy(), bboxes)
         loss = net.module.loss + net.module.rpn.loss
-        # loss = criterion(outputs, bboxes)
         loss.backward()
         optimizer.step()
         batch_loss += loss.data[0]
