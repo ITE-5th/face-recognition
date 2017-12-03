@@ -14,7 +14,6 @@ from .rpn_msr.anchor_target_layer import anchor_target_layer as anchor_target_la
 from .rpn_msr.proposal_layer import proposal_layer as proposal_layer_py
 from .rpn_msr.proposal_target_layer import proposal_target_layer as proposal_target_layer_py
 from .utils.blob import im_list_to_blob
-from .vgg16 import VGG16
 
 
 def nms_detections(pred_boxes, scores, nms_thresh, inds=None):
@@ -65,15 +64,40 @@ class RPN(nn.Module):
 
         # proposal layer
         cfg_key = 'TRAIN' if self.training else 'TEST'
-        rois = self.proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info,
-                                   cfg_key, self._feat_stride, self.anchor_scales)
+
+        # rpn_cls_prob_reshape ( bs, 18, 37, 50)
+        # rpn_bbox_pred ( bs, 36, 37, 50)
+        # im_info ( bs, 3)
+        batch_size = features.size()[0]
+        rois = [[] for _ in range(batch_size)]
+        for i in range(batch_size):
+            rois[i] = self.proposal_layer(rpn_cls_prob_reshape[i].unsqueeze(0), rpn_bbox_pred[i].unsqueeze(0),
+                                          [im_info[i]], cfg_key, self._feat_stride, self.anchor_scales)
 
         # generating training labels and build the rpn loss
         if self.training:
             assert gt_boxes is not None
-            rpn_data = self.anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas,
-                                                im_info, self._feat_stride, self.anchor_scales)
-            self.cross_entropy, self.loss_box = self.build_loss(rpn_cls_score_reshape, rpn_bbox_pred, rpn_data)
+            # rpn_cls_score ( bs, 18, 37, 50)
+            # gt_boxes ( bs, bboxes, 5 )
+
+            for i in range(batch_size):
+                rpn_data = self.anchor_target_layer(rpn_cls_score[i].unsqueeze(0), gt_boxes[i], gt_ishard,
+                                                    dontcare_areas, [im_info[i]],
+                                                    self._feat_stride, self.anchor_scales)
+
+                # rpn_data ( 4, .... ) ... = many tensors
+                cs, lb = self.build_loss(rpn_cls_score_reshape[i].unsqueeze(0),
+                                         rpn_bbox_pred[i].unsqueeze(0), rpn_data)
+
+                if self.cross_entropy is None:
+                    self.cross_entropy = cs
+                    self.loss_box = lb
+                else:
+                    self.cross_entropy += cs
+                    self.loss_box += lb
+
+            self.cross_entropy /= batch_size
+            self.loss_box /= batch_size
 
         return rois
 
