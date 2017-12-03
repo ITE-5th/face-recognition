@@ -4,22 +4,23 @@ from multiprocessing import Pool, cpu_count
 import numpy as np
 from scipy.spatial.distance import cdist
 from sklearn.base import BaseEstimator
-from sklearn.datasets import load_digits, load_iris
+from sklearn.datasets import load_digits
 from sklearn.externals import joblib
 from sklearn.metrics import make_scorer, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.svm import SVC
 
 
 class EVM(BaseEstimator):
     def __init__(self,
                  tail: int = 100,
                  open_set_threshold: float = 0.5,
+                 biased_distance: float = 0.5,
                  k: int = 5,
                  redundancy_rate: float = 0,
                  n_jobs: int = cpu_count()):
         super().__init__()
         self.tail = tail
+        self.biased_distance = biased_distance
         self.classes = []
         self.dists = []
         self.open_set_threshold = open_set_threshold
@@ -57,7 +58,7 @@ class EVM(BaseEstimator):
         out_class = np.concatenate([self.classes[i] for i in self.classes.keys() if i != class_index])
         distances = cdist(in_class, out_class)
         distances.sort(axis=1)
-        distances = 0.5 * distances[:, :self.tail]
+        distances = self.biased_distance * distances[:, :self.tail]
         return np.apply_along_axis(self._fit_weibull, 1, distances)
 
     def _fit_weibull(self, row):
@@ -162,7 +163,7 @@ if __name__ == '__main__':
 
     print("number of training samples = {}, obviously choosing a small tail will yield a very bad result".format(
         X_train.shape[0]))
-    estimator = EVM(open_set_threshold=0)
+    estimator = EVM(open_set_threshold=0, biased_distance=0.7)
     params = {"tail": [400]}
     grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
     grid.fit(X_train, y_train)

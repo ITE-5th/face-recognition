@@ -20,7 +20,7 @@ def vgg_extractor(use_cuda=True):
 
     extractor = VGG_FACE
     extractor.load_state_dict(torch.load('../data/VGG_FACE.pth'))
-    extractor = torch.nn.Sequential(*list(extractor.children())[:-2])
+    extractor = torch.nn.Sequential(*list(extractor.children())[:-7])
     for param in extractor.parameters():
         param.requires_grad = False
     extractor.eval()

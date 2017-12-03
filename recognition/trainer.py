@@ -1,21 +1,17 @@
 import os
 from multiprocessing import cpu_count
 
-import cv2
 import numpy as np
 import torch
 import torch.nn as nn
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import make_scorer, accuracy_score
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.svm import SVC
 from torch.autograd import Variable
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 
 from evm.evm import EVM
-from preprocessing.aligner_preprocessor import AlignerPreprocessor
-from recognition.extractors import vgg_extractor
 from recognition.face_recognition_dataset import FaceRecognitionDataset
 from recognition.image_feature_extractor import ImageFeatureExtractor
 from recognition.net import Net
@@ -39,11 +35,11 @@ def val_accuracy(dataloader, net):
     return epoch_correct, epoch_loss
 
 
-def split_data(faces):
+def split_data(data):
     train, val = [], []
-    for i in range(0, len(faces), 5):
-        train.extend(faces[i: i + 4])
-        val.append(faces[i + 4])
+    for i in range(0, len(data), 5):
+        train.extend(data[i: i + 4])
+        val.append(data[i + 4])
     return train, val
 
 
@@ -110,15 +106,17 @@ else:
     X_train, X_test = np.array(temp[0]), np.array(temp[1])
     temp = split_data(y)
     y_train, y_test = np.array(temp[0]), np.array(temp[1])
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=40)
     print("number of training samples = {}, obviously choosing a small tail will yield a very bad result".format(
         X_train.shape[0]))
-    # estimator = EVM(open_set_threshold=0)
-    # params = {"tail": range(1, 9)}
-    estimator = LogisticRegression()
-    params = {}
+    # estimator = SVC(kernel="rbf")
+    # params = {}
+    estimator = EVM(open_set_threshold=0.3, biased_distance=0.7)
+    params = {"tail": [8]}
     grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
     grid.fit(X_train, y_train)
     best_estimator = grid.best_estimator_
+    best_estimator.save("../evm_model.model")
     predicted = best_estimator.predict(X_test)
     # supported_classes = list(best_estimator.classes.keys())
     # y_test = np.array([y if y in supported_classes else -1 for y in y_test])
