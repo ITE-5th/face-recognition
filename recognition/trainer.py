@@ -111,7 +111,7 @@ else:
         X_train.shape[0]))
     # estimator = SVC(kernel="rbf")
     # params = {}
-    estimator = EVM(open_set_threshold=0.3, biased_distance=0.7)
+    estimator = EVM(open_set_threshold=0.5, biased_distance=0.7)
     params = {"tail": [8]}
     grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
     grid.fit(X_train, y_train)
