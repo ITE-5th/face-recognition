@@ -26,7 +26,7 @@ class FaceDetectionDataset(Dataset):
 
     def __getitem__(self, index):
         img_name = os.path.join(self.root_dir, self.names[index])
-        image = cv2.imread(img_name).astype(np.float)
+        image = cv2.imread(img_name).astype(np.float32)
 
         # image = np.swapaxes(image, 0, 2)
         # image = np.swapaxes(image, 1, 2)

@@ -77,3 +77,7 @@ Excluded Data/
 CMS/main.py
 /models/
 CMS/csv_to_json.py
+!/CMS/data/wider_face_split/wider_face_train_bbx_gt.json
+CMS/faster_rcnn/rpn_msr/proposal_target_layer1.py.bak
+CMS/temp_cms.py
+CMS/tester.py
