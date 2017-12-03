@@ -1,8 +1,0 @@
-./data/lfw/Jeff_Feldman/Jeff_Feldman_0001.jpg
-./data/lfw/Adam_Scott/Adam_Scott_0001.jpg
-./data/lfw/Derrick_Rodgers/Derrick_Rodgers_0001.jpg
-./data/lfw/Jennifer_Rodriguez/Jennifer_Rodriguez_0001.jpg
-./data/lfw/LK_Advani/LK_Advani_0003.jpg
-./data/lfw/Mohammad_Fares/Mohammad_Fares_0001.jpg
-./data/lfw/Claudia_Pechstein/Claudia_Pechstein_0003.jpg
-./data/lfw/Claudia_Pechstein/Claudia_Pechstein_0005.jpg

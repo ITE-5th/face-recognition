@@ -1,6 +1,4 @@
-
-
-def inception_extractor():
+def inception_extractor(use_cuda=True):
     from torch import nn
 
     from recognition.inceptionresnetv2 import inceptionresnetv2
@@ -11,19 +9,21 @@ def inception_extractor():
     for param in extractor.parameters():
         param.requires_grad = False
     extractor.eval()
-    extractor = extractor.cuda()
+    if use_cuda:
+        extractor = extractor.cuda()
     return extractor
 
 
-def vgg_extractor():
+def vgg_extractor(use_cuda=True):
     import torch
     from recognition.VGG_FACE import VGG_FACE
 
     extractor = VGG_FACE
     extractor.load_state_dict(torch.load('../data/VGG_FACE.pth'))
-    extractor = torch.nn.Sequential(*list(extractor.children())[:-5])
+    extractor = torch.nn.Sequential(*list(extractor.children())[:-2])
     for param in extractor.parameters():
         param.requires_grad = False
     extractor.eval()
-    extractor = extractor.cuda()
+    if use_cuda:
+        extractor = extractor.cuda()
     return extractor

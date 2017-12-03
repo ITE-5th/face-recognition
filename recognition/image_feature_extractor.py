@@ -6,21 +6,21 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 
-from recognition.extractors import vgg_extractor
+from recognition.extractors import vgg_extractor, inception_extractor
 
 
 class ImageFeatureExtractor:
     @staticmethod
-    def extract(root_dir: str, vgg_face=False):
-        extractor = vgg_extractor()
-        names = sorted(os.listdir(root_dir + "/lfw2"))
-        if not os.path.exists(root_dir + "/lfw_features"):
-            os.makedirs(root_dir + "/lfw_features")
+    def extract(root_dir: str, vgg_face=False, lfw=False):
+        extractor = vgg_extractor() if vgg_face else inception_extractor()
+        names = sorted(os.listdir(root_dir + ("/lfw2" if lfw else "/custom_images2")))
+        if not os.path.exists(root_dir + ("/custom_features" if not lfw else "/lfw_features")):
+            os.makedirs(root_dir + ("/custom_features" if not lfw else "/lfw_features"))
         for i in range(len(names)):
             name = names[i]
-            path = root_dir + "/lfw2/" + name
-            if not os.path.exists(root_dir + "/lfw_features/" + name):
-                os.makedirs(root_dir + "/lfw_features/" + name)
+            path = root_dir + ("/custom_images2/" if not lfw else "/lfw2/") + name
+            if not os.path.exists(root_dir + ("/custom_features/" if not lfw else "/lfw_features/") + name):
+                os.makedirs(root_dir + ("/custom_features/" if not lfw else "/lfw_features/") + name)
             faces = os.listdir(path)
             for face in faces:
                 p = path + "/" + face
@@ -33,13 +33,13 @@ class ImageFeatureExtractor:
                 image = extractor(Variable(image))
                 image = image.view(-1).cpu()
                 res = (image.data, i)
-                temp = root_dir + "/lfw_features/" + name + "/" + face[:face.rfind(".")] + ".features"
+                temp = root_dir + ("/custom_features/" if not lfw else "/lfw_features/") + name + "/" + face[:face.rfind(".")] + ".features"
                 print(temp)
                 torch.save(res, temp)
 
     @staticmethod
-    def load(root_dir: str):
-        temp = glob.glob(root_dir + "/lfw_features/**/*.features")
+    def load(root_dir: str, lfw=False):
+        temp = glob.glob(root_dir + "/{}_features/**/*.features".format("lfw" if lfw else "custom"))
         return [torch.load(face) for face in temp]
 
 
