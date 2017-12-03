@@ -16,6 +16,4 @@ class AlignerPreprocessor(Preprocessor):
         rect = AlignerPreprocessor.detector(image, 1)[0].rect
         aligned = AlignerPreprocessor.aligner.align(299, image, rect,
                                                     landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
-        aligned = np.swapaxes(aligned, 0, 2)
-        aligned = np.swapaxes(aligned, 1, 2)
         return aligned
