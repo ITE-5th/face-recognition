@@ -4,10 +4,11 @@ from multiprocessing import Pool, cpu_count
 import numpy as np
 from scipy.spatial.distance import cdist
 from sklearn.base import BaseEstimator
-from sklearn.datasets import load_digits
+from sklearn.datasets import load_digits, load_iris
 from sklearn.externals import joblib
 from sklearn.metrics import make_scorer, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.svm import SVC
 
 
 class EVM(BaseEstimator):
@@ -28,40 +29,32 @@ class EVM(BaseEstimator):
         self.n_jobs = n_jobs
 
     def fit(self, X, y):
-        max_class = y.max()
-        self.max_class = max_class
-        self.classes = [0] * (max_class + 1)
-        self.dists = [0] * (max_class + 1)
-        for i in range(max_class + 1):
-            self.classes[i] = X[y == i]
+        classes = np.unique(y)
+        self.classes = dict()
+        self.dists = dict()
+        for clz in classes:
+            self.classes[clz] = X[y == clz]
         self._infer()
         if self.redundancy_rate > 0:
             self._reduce()
 
     def fit_new_data(self, X, y):
-        max_class = y.max()
-        self.classes += [0] * (max_class - self.max_class)
-        self.dists += [0] * (max_class - self.max_class)
-        old_max_class = self.max_class
-        self.max_class = max_class
-        for i in range(old_max_class + 1, max_class + 1):
-            self.classes[i] = X[y == i]
-        self._infer_classes(list(range(old_max_class + 1, max_class + 1)))
+        pass
 
     def _infer(self):
-        l = list(range(len(self.classes)))
-        self._infer_classes(l)
+        self._infer_classes(self.classes.keys())
 
     def _infer_classes(self, indices):
-        f = indices[0]
-        with Pool(self.n_jobs) as p:
-            self.dists[f:] = p.map(self._infer_class, indices)
-            p.close()
-            p.join()
+        for i in indices:
+            self.dists[i] = self._infer_class(i)
+        # with Pool(self.n_jobs) as p:
+        #     self.dists[f:] = p.map(self._infer_class, indices)
+        #     p.close()
+        #     p.join()
 
     def _infer_class(self, class_index):
         in_class = self.classes[class_index]
-        out_class = np.concatenate([self.classes[i] for i in range(len(self.classes)) if i != class_index])
+        out_class = np.concatenate([self.classes[i] for i in self.classes.keys() if i != class_index])
         distances = cdist(in_class, out_class)
         distances.sort(axis=1)
         distances = 0.5 * distances[:, :self.tail]
@@ -77,7 +70,7 @@ class EVM(BaseEstimator):
 
     def _predict_row_generalized(self, row):
         max_prop, max_class = 0, -1
-        for i in range(len(self.dists)):
+        for i in self.classes.keys():
             clz, dist = self.classes[i], self.dists[i]
             distances = np.linalg.norm(clz - row, axis=1, keepdims=True)
             temp = [dist[j].w_score(distances[j]) for j in range(dist.shape[0])]
@@ -92,7 +85,7 @@ class EVM(BaseEstimator):
     def _predict_row(self, row):
         max_prop = 0
         max_class = -1
-        for i in range(len(self.dists)):
+        for i in self.classes.keys():
             clz, dist = self.classes[i], self.dists[i]
             distances = np.linalg.norm(clz - row, axis=1, keepdims=True)
             props = [dist[j].w_score(distances[j]) for j in range(dist.shape[0])]
@@ -105,7 +98,7 @@ class EVM(BaseEstimator):
 
     def _reduce(self):
         with Pool(self.n_jobs) as p:
-            p.map(self._reduce_class, range(len(self.classes)))
+            p.map(self._reduce_class, self.classes.keys())
             p.close()
             p.join()
 
@@ -170,7 +163,7 @@ if __name__ == '__main__':
     print("number of training samples = {}, obviously choosing a small tail will yield a very bad result".format(
         X_train.shape[0]))
     estimator = EVM(open_set_threshold=0)
-    params = {"tail": [700]}
+    params = {"tail": [400]}
     grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
     grid.fit(X_train, y_train)
     best_estimator = grid.best_estimator_
