@@ -161,5 +161,5 @@ setup(
     ext_modules=ext_modules,
     # inject our custom trigger
     cmdclass={'build_ext': custom_build_ext}, requires=['numpy', 'torch', 'cv2', 'libmr', 'scipy', 'scikit-learn',
-                                                        'pandas']
+                                                        'pandas', 'PyQt5']
 )
