@@ -6,8 +6,8 @@ import cv2
 import dlib
 import openface
 
+from util.file_path_manager import FilePathManager
 from recognition.preprocessing.preprocessor import Preprocessor
-from file_path_manager import FilePathManager
 
 
 class AlignerPreprocessor(Preprocessor):
@@ -17,14 +17,19 @@ class AlignerPreprocessor(Preprocessor):
     predictor = dlib.shape_predictor(path_to_pretrained_model)
     aligner = openface.AlignDlib(path_to_pretrained_model)
 
-    def __init__(self):
+    def __init__(self, scale: int = 1):
         self.lfw = None
+        self.scale = scale
 
     def preprocess(self, image):
-        rect = AlignerPreprocessor.detector(image, 2)[0].rect
-        aligned = AlignerPreprocessor.aligner.align(299, image, rect,
-                                                    landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
-        return aligned
+        items = AlignerPreprocessor.detector(image, self.scale)
+        result = []
+        for item in items:
+            rect = item.rect
+            aligned = AlignerPreprocessor.aligner.align(299, image, rect,
+                                                        landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
+            result.append((aligned, rect))
+        return result
 
     def preprocess_faces(self, faces, lfw: bool = False):
         self.lfw = lfw
@@ -34,13 +39,16 @@ class AlignerPreprocessor(Preprocessor):
             p.join()
 
     def process_face(self, face):
-        lfw = self.lfw
+        ind = face.index("lfw" if self.lfw else "custom_images") + (len("lfw") if self.lfw else len("custom_images"))
+
+        def preprocess_single(image):
+            image = cv2.imread(image)
+            rect = AlignerPreprocessor.detector(image, self.scale)[0].rect
+            return AlignerPreprocessor.aligner.align(299, image, rect,
+                                                     landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
+
         try:
-            image = cv2.imread(face)
-            rect = AlignerPreprocessor.detector(image, 1)[0].rect
-            aligned = AlignerPreprocessor.aligner.align(299, image, rect,
-                                                        landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
-            ind = face.index("lfw" if lfw else "custom_images") + (len("lfw") if lfw else len("custom_images")) - 1
+            aligned = preprocess_single(face)
             temp = face[:ind] + "2" + face[ind:]
             dirname = temp[:temp.rfind("/")]
             if not os.path.exists(dirname):
@@ -53,6 +61,6 @@ class AlignerPreprocessor(Preprocessor):
 
 
 if __name__ == '__main__':
-    faces = glob.glob(FilePathManager.load_path("data/custom_images/**/*"))
-    p = AlignerPreprocessor()
+    faces = sorted(glob.glob(FilePathManager.load_path("data/custom_images/**/*")))
+    p = AlignerPreprocessor(scale=1)
     p.preprocess_faces(faces)

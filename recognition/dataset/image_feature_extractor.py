@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 
-from file_path_manager import FilePathManager
+from util.file_path_manager import FilePathManager
 from recognition.pretrained.extractors import inception_extractor, vgg_extractor
 
 

@@ -9,7 +9,8 @@ from sklearn.model_selection import GridSearchCV
 from torch.autograd import Variable
 from torch.optim import Adam
 from torch.utils.data import DataLoader
-from file_path_manager import FilePathManager
+
+from util.file_path_manager import FilePathManager
 from recognition.dataset.face_recognition_dataset import FaceRecognitionDataset
 from recognition.dataset.image_feature_extractor import ImageFeatureExtractor
 from recognition.estimator.evm import EVM
@@ -98,7 +99,6 @@ if __name__ == '__main__':
             )
 
     else:
-        # TODO: review :)
         features = ImageFeatureExtractor.load(root_path)
         X, y = zip(*features)
         X, y = np.array([x.float().numpy() for x in X]), np.array(y)
@@ -111,7 +111,7 @@ if __name__ == '__main__':
             X_train.shape[0]))
         # estimator = SVC(kernel="rbf")
         # params = {}
-        estimator = EVM(open_set_threshold=0.5, biased_distance=0.7)
+        estimator = EVM(tail=8, open_set_threshold=0.3, biased_distance=0.7)
         params = {"tail": [8]}
         grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
         grid.fit(X_train, y_train)

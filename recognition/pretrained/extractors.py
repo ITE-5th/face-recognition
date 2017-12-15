@@ -1,4 +1,4 @@
-from file_path_manager import FilePathManager
+from util.file_path_manager import FilePathManager
 
 def inception_extractor(use_cuda=True):
     from torch import nn
