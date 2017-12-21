@@ -68,10 +68,11 @@ class Ui_MainWindow(QWidget):
         font_scale = 1
         for (name, rect, prop) in predicted:
             name = name.replace("_", " ")
+            prop = round(prop, 3) * 100
             x, y, w, h = rect.left(), rect.top(), rect.right() - rect.left(), rect.bottom() - rect.top()
             cv2.rectangle(image, (x, y), (x + w, y + h), (255, 255, 255), 2)
             cv2.putText(image, name, (x - 5, y - 5), cv2.FONT_HERSHEY_COMPLEX, font_scale, (255, 255, 255), 2)
-            cv2.putText(image, str(prop), (x, y + h + 25), cv2.FONT_HERSHEY_COMPLEX, font_scale, (255, 255, 255), 2)
+            cv2.putText(image, "{}%".format(prop), (x, y + h + 25), cv2.FONT_HERSHEY_COMPLEX, font_scale, (255, 255, 255), 2)
         cv2.imwrite("temp.jpg", image)
         self.set_image("temp.jpg")
         os.system("rm temp.jpg")
