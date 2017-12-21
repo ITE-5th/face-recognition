@@ -112,11 +112,15 @@ if __name__ == '__main__':
         # estimator = SVC(kernel="rbf")
         # params = {}
         estimator = EVM(tail=8, open_set_threshold=0.3, biased_distance=0.7)
-        params = {"tail": [8]}
+        params = {"tail": range(5, 10), "open_set_threshold": [0.2, 0.4, 0.6], "biased_distance": [0.5, 0.7]}
         grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
         grid.fit(X_train, y_train)
         best_estimator = grid.best_estimator_
-        best_estimator.save(FilePathManager.load_path("models/evm/evm_model.model"))
+        path = FilePathManager.load_path("models/evm")
+        if not os.path.exists(path):
+            os.makedirs(path)
+        path += "/evm.model"
+        best_estimator.save(path)
         predicted = best_estimator.predict(X_test)
         # supported_classes = list(best_estimator.classes.keys())
         # y_test = np.array([y if y in supported_classes else -1 for y in y_test])

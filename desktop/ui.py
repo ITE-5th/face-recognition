@@ -11,7 +11,7 @@ from util.file_path_manager import FilePathManager
 
 
 class Ui_MainWindow(QWidget):
-    root_path = FilePathManager.load_path("images")
+    root_path = FilePathManager.load_path("test_images")
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -41,7 +41,7 @@ class Ui_MainWindow(QWidget):
 
         # custom
 
-        self.predictor = EvmPredictor(FilePathManager.load_path("models/evm/evm_model.model"))
+        self.predictor = EvmPredictor(FilePathManager.load_path("models/evm/evm.model"))
         self.setupEvents()
 
     def retranslateUi(self, MainWindow):
@@ -64,12 +64,10 @@ class Ui_MainWindow(QWidget):
         image_path = "{}/{}".format(Ui_MainWindow.root_path, item)
         predicted = self.predictor.predict_from_path(image_path)
         image = cv2.imread(image_path)
-        font_scale = 1 if len(predicted) == 1 else 1 - len(predicted) * 0.17
+        font_scale = 2 if len(predicted) == 1 else 1 - len(predicted) * 0.1
         for (name, rect) in predicted:
             name = name.replace("_", " ")
             x, y, w, h = rect.left(), rect.top(), rect.right() - rect.left(), rect.bottom() - rect.top()
-            # w, h = int(w * (image.shape[1] / self.imageLabel.width())), int(
-            #     h * (image.shape[0] / self.imageLabel.height()))
             cv2.rectangle(image, (x, y), (x + w, y + h), (255, 255, 255), 2)
             cv2.putText(image, name, (x - 5, y - 5), cv2.FONT_HERSHEY_COMPLEX, font_scale, (255, 255, 255), 2)
         cv2.imwrite("temp.jpg", image)

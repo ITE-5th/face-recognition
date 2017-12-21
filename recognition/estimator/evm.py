@@ -2,7 +2,7 @@ import libmr
 from multiprocessing import Pool, cpu_count
 
 import numpy as np
-from numba import float_, int_, bool_
+# from numba import float_, int_, bool_
 from scipy.spatial.distance import cdist
 from sklearn.base import BaseEstimator
 from sklearn.datasets import load_digits, load_iris
@@ -10,17 +10,17 @@ from sklearn.externals import joblib
 from sklearn.metrics import make_scorer, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
 
-spec = [
-    ('tail', int_),
-    ('open_set_threshold', float_),
-    ('biased_distance', float_),
-    ('k', int_),
-    ("redundancy_rate", float_),
-    ("use_multithreading", bool_),
-    ("n_jobs", int_),
-    ("classes", dict),
-    ("dists", dict)
-]
+# spec = [
+#     ('tail', int_),
+#     ('open_set_threshold', float_),
+#     ('biased_distance', float_),
+#     ('k', int_),
+#     ("redundancy_rate", float_),
+#     ("use_multithreading", bool_),
+#     ("n_jobs", int_),
+#     ("classes", dict),
+#     ("dists", dict)
+# ]
 
 
 def load(model_path: str):
