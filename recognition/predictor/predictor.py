@@ -12,7 +12,8 @@ from recognition.pretrained.extractors import vgg_extractor
 
 
 class Predictor(metaclass=ABCMeta):
-    preprocessor = AlignerPreprocessor(scale=0)
+    scale = 1
+    preprocessor = AlignerPreprocessor(scale)
     extractor = vgg_extractor()
 
     def __init__(self, use_custom: bool = True, use_cuda: bool = True):

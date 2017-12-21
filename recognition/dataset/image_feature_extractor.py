@@ -40,7 +40,7 @@ class ImageFeatureExtractor:
 
     @staticmethod
     def load(root_dir: str, lfw=False):
-        temp = glob.glob(root_dir + "/{}_features/**/*.features".format("lfw" if lfw else "custom"))
+        temp = sorted(glob.glob(root_dir + "/{}_features/**/*.features".format("lfw" if lfw else "custom")))
         return [torch.load(face) for face in temp]
 
 

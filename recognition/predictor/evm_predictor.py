@@ -15,7 +15,7 @@ class EvmPredictor(Predictor):
         result = []
         for (face, rect) in items:
             x = face.data.cpu().numpy().reshape(1, -1)
-            predicted = self.evm.predict(x)
-            predicted = predicted[0]
-            result.append((self.names[predicted] if predicted != -1 else EvmPredictor.UNKNOWN, rect))
+            predicted = self.evm.predict_with_prop(x)
+            clz, prop = predicted[0]
+            result.append((self.names[int(clz)] if clz != -1 else EvmPredictor.UNKNOWN, rect, prop))
         return result

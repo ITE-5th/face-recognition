@@ -10,6 +10,7 @@ from sklearn.externals import joblib
 from sklearn.metrics import make_scorer, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
 
+
 # spec = [
 #     ('tail', int_),
 #     ('open_set_threshold', float_),
@@ -31,7 +32,7 @@ def load(model_path: str):
 class EVM(BaseEstimator):
 
     def __init__(self,
-                 tail: int,
+                 tail: int = 10,
                  open_set_threshold: float = 0.5,
                  biased_distance: float = 0.5,
                  k: int = 5,
@@ -144,6 +145,30 @@ class EVM(BaseEstimator):
         props = sorted(temp, reverse=True)[:self.k]
         prop = sum(props) / self.k
         return prop, class_index
+
+    def predict_with_prop(self, X):
+        return np.apply_along_axis(self._predict_with_prob, 1, X)
+
+    def _predict_with_prob(self, row):
+        if self.use_multithreading:
+            with Pool(self.n_jobs) as p:
+                result = p.map(self._predict_class, [(row, key) for key in self.classes.keys()])
+                p.close()
+                p.join()
+            maxi = max(result, key=lambda x: x[0])
+            max_prop, max_class = maxi
+        else:
+            max_prop, max_class = -1, -1
+            for i in self.classes.keys():
+                clz, dist = self.classes[i], self.dists[i]
+                distances = np.linalg.norm(clz - row, axis=1, keepdims=True)
+                props = [dist[j].w_score(distances[j]) for j in range(dist.shape[0])]
+                prop = max(props)
+                if prop > max_prop:
+                    max_prop = prop
+                    max_class = i
+        # -1 if from another class
+        return (max_class, max_prop) if max_prop >= self.open_set_threshold else (-1, 1 - max_prop)
 
     def _predict_class(self, item):
         row, class_index = item

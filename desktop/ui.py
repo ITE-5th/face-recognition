@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QFileSystemModel
 from PyQt5.QtWidgets import QWidget
 
 from recognition.predictor.evm_predictor import EvmPredictor
+from recognition.predictor.predictor import Predictor
 from util.file_path_manager import FilePathManager
 
 
@@ -40,7 +41,7 @@ class Ui_MainWindow(QWidget):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
         # custom
-
+        Predictor.scale = 1
         self.predictor = EvmPredictor(FilePathManager.load_path("models/evm/evm.model"))
         self.setupEvents()
 
@@ -64,12 +65,13 @@ class Ui_MainWindow(QWidget):
         image_path = "{}/{}".format(Ui_MainWindow.root_path, item)
         predicted = self.predictor.predict_from_path(image_path)
         image = cv2.imread(image_path)
-        font_scale = 2 if len(predicted) == 1 else 1 - len(predicted) * 0.1
-        for (name, rect) in predicted:
+        font_scale = 1
+        for (name, rect, prop) in predicted:
             name = name.replace("_", " ")
             x, y, w, h = rect.left(), rect.top(), rect.right() - rect.left(), rect.bottom() - rect.top()
             cv2.rectangle(image, (x, y), (x + w, y + h), (255, 255, 255), 2)
             cv2.putText(image, name, (x - 5, y - 5), cv2.FONT_HERSHEY_COMPLEX, font_scale, (255, 255, 255), 2)
+            cv2.putText(image, str(prop), (x, y + h + 25), cv2.FONT_HERSHEY_COMPLEX, font_scale, (255, 255, 255), 2)
         cv2.imwrite("temp.jpg", image)
         self.set_image("temp.jpg")
         os.system("rm temp.jpg")

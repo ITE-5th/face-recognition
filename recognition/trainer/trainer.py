@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from sklearn.metrics import make_scorer, accuracy_score
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, train_test_split
 from torch.autograd import Variable
 from torch.optim import Adam
 from torch.utils.data import DataLoader
@@ -15,6 +15,7 @@ from recognition.dataset.face_recognition_dataset import FaceRecognitionDataset
 from recognition.dataset.image_feature_extractor import ImageFeatureExtractor
 from recognition.estimator.evm import EVM
 from recognition.estimator.net import Net
+import random
 
 
 def save_checkpoint(state, epoch):
@@ -35,11 +36,14 @@ def val_accuracy(dataloader, net):
     return epoch_correct, epoch_loss
 
 
+samples_per_class = 7
+
+
 def split_data(data):
     train, val = [], []
-    for i in range(0, len(data), 5):
-        train.extend(data[i: i + 4])
-        val.append(data[i + 4])
+    for i in range(0, len(data), samples_per_class):
+        train.extend(data[i: i + samples_per_class - 1])
+        val.append(data[i + samples_per_class - 1])
     return train, val
 
 
@@ -102,17 +106,17 @@ if __name__ == '__main__':
         features = ImageFeatureExtractor.load(root_path)
         X, y = zip(*features)
         X, y = np.array([x.float().numpy() for x in X]), np.array(y)
-        temp = split_data(X)
-        X_train, X_test = np.array(temp[0]), np.array(temp[1])
-        temp = split_data(y)
-        y_train, y_test = np.array(temp[0]), np.array(temp[1])
-        # X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=40)
+        # temp = split_data(X)
+        # X_train, X_test = np.array(temp[0]), np.array(temp[1])
+        # temp = split_data(y)
+        # y_train, y_test = np.array(temp[0]), np.array(temp[1])
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=40)
         print("number of training samples = {}, obviously choosing a small tail will yield a very bad result".format(
             X_train.shape[0]))
         # estimator = SVC(kernel="rbf")
         # params = {}
-        estimator = EVM(tail=8, open_set_threshold=0.3, biased_distance=0.7)
-        params = {"tail": range(5, 10), "open_set_threshold": [0.2, 0.4, 0.6], "biased_distance": [0.5, 0.7]}
+        estimator = EVM()
+        params = {"tail": range(5, 13), "open_set_threshold": [0.2, 0.4, 0.6], "biased_distance": [0.5, 0.7]}
         grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
         grid.fit(X_train, y_train)
         best_estimator = grid.best_estimator_
