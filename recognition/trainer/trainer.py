@@ -106,17 +106,11 @@ if __name__ == '__main__':
         features = ImageFeatureExtractor.load(root_path)
         X, y = zip(*features)
         X, y = np.array([x.float().numpy() for x in X]), np.array(y)
-        # temp = split_data(X)
-        # X_train, X_test = np.array(temp[0]), np.array(temp[1])
-        # temp = split_data(y)
-        # y_train, y_test = np.array(temp[0]), np.array(temp[1])
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=40)
         print("number of training samples = {}, obviously choosing a small tail will yield a very bad result".format(
             X_train.shape[0]))
-        # estimator = SVC(kernel="rbf")
-        # params = {}
         estimator = EVM()
-        params = {"tail": range(5, 13), "open_set_threshold": [0.2, 0.4, 0.6], "biased_distance": [0.5, 0.7]}
+        params = {"tail": range(5, 13), "open_set_threshold": [0.2, 0.4, 0.6], "biased_distance": [0.3, 0.5, 0.7]}
         grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
         grid.fit(X_train, y_train)
         best_estimator = grid.best_estimator_

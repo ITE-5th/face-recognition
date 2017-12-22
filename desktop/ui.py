@@ -1,10 +1,13 @@
 import os
+from random import random as rand
 
 import cv2
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFileSystemModel
 from PyQt5.QtWidgets import QWidget
+import matplotlib.pyplot as plt
+
 
 from recognition.predictor.evm_predictor import EvmPredictor
 from recognition.predictor.predictor import Predictor
@@ -13,6 +16,8 @@ from util.file_path_manager import FilePathManager
 
 class Ui_MainWindow(QWidget):
     root_path = FilePathManager.load_path("test_images")
+    # matplotlib or opencv
+    drawing_method = "matplotlib"
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -41,7 +46,7 @@ class Ui_MainWindow(QWidget):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
         # custom
-        Predictor.scale = 1
+        Predictor.scale = 0
         self.predictor = EvmPredictor(FilePathManager.load_path("models/evm/evm.model"))
         self.setupEvents()
 
@@ -65,17 +70,7 @@ class Ui_MainWindow(QWidget):
         image_path = "{}/{}".format(Ui_MainWindow.root_path, item)
         predicted = self.predictor.predict_from_path(image_path)
         image = cv2.imread(image_path)
-        font_scale = 1
-        for (name, rect, prop) in predicted:
-            name = name.replace("_", " ")
-            prop = round(prop, 3) * 100
-            x, y, w, h = rect.left(), rect.top(), rect.right() - rect.left(), rect.bottom() - rect.top()
-            cv2.rectangle(image, (x, y), (x + w, y + h), (255, 255, 255), 2)
-            cv2.putText(image, name, (x - 5, y - 5), cv2.FONT_HERSHEY_COMPLEX, font_scale, (255, 255, 255), 2)
-            cv2.putText(image, "{}%".format(prop), (x, y + h + 25), cv2.FONT_HERSHEY_COMPLEX, font_scale, (255, 255, 255), 2)
-        cv2.imwrite("temp.jpg", image)
-        self.set_image("temp.jpg")
-        os.system("rm temp.jpg")
+        self.show_boxes(image, predicted)
 
     def item_selection_changed_slot(self):
         index = self.treeView.selectedIndexes()[0]
@@ -88,8 +83,39 @@ class Ui_MainWindow(QWidget):
         scaled_pixmap = pixmap.scaled(self.imageLabel.size(), Qt.KeepAspectRatio)
         self.imageLabel.setPixmap(scaled_pixmap)
 
+    def show_boxes(self, image, predicted):
+        if Ui_MainWindow.drawing_method == "matplotlib":
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            plt.cla()
+            plt.axis("off")
+            plt.imshow(image)
+            for (name, rect, prop) in predicted:
+                name = name.replace("_", " ")
+                color = (rand(), rand(), rand())
+                x, y, w, h = rect.left(), rect.top(), rect.right() - rect.left(), rect.bottom() - rect.top()
+                rect = plt.Rectangle((x, y),
+                                     w,
+                                     h,
+                                     fill=False,
+                                     edgecolor=color,
+                                     linewidth=2.5)
+                plt.gca().add_patch(rect)
+                plt.gca().text(x, y - 10,
+                               '{:s}\n{:.3f}'.format(name, prop),
+                               bbox=dict(facecolor=color, alpha=0.5), fontsize=9, color='white')
+            plt.show()
+        else:
+            font_scale = 1
+            for (name, rect, prop) in predicted:
+                name = name.replace("_", " ")
+                color = (rand() * 255, rand() * 255, rand() * 255)
+                x, y, w, h = rect.left(), rect.top(), rect.right() - rect.left(), rect.bottom() - rect.top()
+                cv2.rectangle(image, (x, y), (x + w, y + h), color, 3)
+                cv2.putText(image, '{:s} {:.3f}'.format(name, prop), (x - 5, y - 5), cv2.FONT_HERSHEY_COMPLEX, font_scale, (255, 255, 255), 2)
+            cv2.imwrite("temp.jpg", image)
+            self.set_image("temp.jpg")
+            os.system("rm temp.jpg")
+
     def keyPressEvent(self, event):
-        # TODO : currently not working :)
-        print(event.text())
-        if event.text().lower() == "pause":
+        if event.key() == QtCore.Qt.Key_Space:
             self.predict()
