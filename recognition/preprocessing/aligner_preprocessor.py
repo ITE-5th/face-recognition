@@ -12,8 +12,8 @@ from recognition.preprocessing.preprocessor import Preprocessor
 
 class AlignerPreprocessor(Preprocessor):
     path_to_pretrained_model = FilePathManager.load_path("data/shape_predictor_68_face_landmarks.dat")
-    path_to_cnn_model = FilePathManager.load_path("data/mmod_human_face_detector.dat")
-    detector = dlib.cnn_face_detection_model_v1(path_to_cnn_model)
+    path_to_cnn_model = FilePathManager.load_path("data/cmsrcnn_face_detector")
+    detector = FilePathManager.load_detection_model()
     predictor = dlib.shape_predictor(path_to_pretrained_model)
     aligner = openface.AlignDlib(path_to_pretrained_model)
 

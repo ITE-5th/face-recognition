@@ -17,7 +17,8 @@ from util.file_path_manager import FilePathManager
 class Ui_MainWindow(QWidget):
     root_path = FilePathManager.load_path("test_images")
     # matplotlib or opencv
-    drawing_method = "matplotlib"
+    drawing_method = "opencv"
+    with_prop = False
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -101,7 +102,7 @@ class Ui_MainWindow(QWidget):
                                      linewidth=2.5)
                 plt.gca().add_patch(rect)
                 plt.gca().text(x, y - 10,
-                               '{:s}\n{:.3f}'.format(name, prop),
+                               '{:s}\n{:.3f}'.format(name, prop) if Ui_MainWindow.with_prop else "{:s}".format(name),
                                bbox=dict(facecolor=color, alpha=0.5), fontsize=9, color='white')
             plt.show()
         else:
@@ -111,7 +112,12 @@ class Ui_MainWindow(QWidget):
                 color = (rand() * 255, rand() * 255, rand() * 255)
                 x, y, w, h = rect.left(), rect.top(), rect.right() - rect.left(), rect.bottom() - rect.top()
                 cv2.rectangle(image, (x, y), (x + w, y + h), color, 3)
-                cv2.putText(image, '{:s} {:.3f}'.format(name, prop), (x - 5, y - 5), cv2.FONT_HERSHEY_COMPLEX, font_scale, (255, 255, 255), 2)
+                cv2.putText(image,
+                            '{:s}\n{:.3f}'.format(name, prop) if Ui_MainWindow.with_prop else "{:s}".format(name),
+                            (x + 5, y - 5),
+                            cv2.FONT_HERSHEY_COMPLEX,
+                            font_scale, (255, 255, 255),
+                            2)
             cv2.imwrite("temp.jpg", image)
             self.set_image("temp.jpg")
             os.system("rm temp.jpg")

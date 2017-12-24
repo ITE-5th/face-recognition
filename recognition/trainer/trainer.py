@@ -103,24 +103,30 @@ if __name__ == '__main__':
             )
 
     else:
+        just_train = True
         features = ImageFeatureExtractor.load(root_path)
         X, y = zip(*features)
         X, y = np.array([x.float().numpy() for x in X]), np.array(y)
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=40)
-        print("number of training samples = {}, obviously choosing a small tail will yield a very bad result".format(
-            X_train.shape[0]))
-        estimator = EVM()
-        params = {"tail": range(5, 13), "open_set_threshold": [0.2, 0.4, 0.6], "biased_distance": [0.3, 0.5, 0.7]}
-        grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
-        grid.fit(X_train, y_train)
-        best_estimator = grid.best_estimator_
+        if just_train:
+            print("number of training samples = {}".format(X.shape[0]))
+            estimator = EVM()
+            params = {"tail": range(3, 13), "open_set_threshold": [0.2, 0.3, 0.4, 0.5],
+                      "biased_distance": [0.5, 0.7]}
+            grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
+            grid.fit(X, y)
+            best_estimator = grid.best_estimator_
+        else:
+            estimator = EVM()
+            params = {"tail": range(3, 10), "open_set_threshold": [0.2, 0.3, 0.4, 0.5], "biased_distance": [0.5, 0.7]}
+            grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
+            grid.fit(X_train, y_train)
+            best_estimator = grid.best_estimator_
+            predicted = best_estimator.predict(X_test)
+            accuracy = (predicted == y_test).sum() * 100 / X_test.shape[0]
+            print("best accuracy = {}".format(accuracy))
         path = FilePathManager.load_path("models/evm")
         if not os.path.exists(path):
             os.makedirs(path)
         path += "/evm.model"
         best_estimator.save(path)
-        predicted = best_estimator.predict(X_test)
-        # supported_classes = list(best_estimator.classes.keys())
-        # y_test = np.array([y if y in supported_classes else -1 for y in y_test])
-        accuracy = (predicted == y_test).sum() * 100 / X_test.shape[0]
-        print("best accuracy = {}".format(accuracy))
