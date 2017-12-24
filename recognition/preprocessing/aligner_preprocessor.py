@@ -17,16 +17,17 @@ class AlignerPreprocessor(Preprocessor):
     predictor = dlib.shape_predictor(path_to_pretrained_model)
     aligner = openface.AlignDlib(path_to_pretrained_model)
 
-    def __init__(self, scale: int = 1):
+    def __init__(self, scale: int = 1, size=400):
         self.lfw = None
         self.scale = scale
+        self.size = size
 
     def preprocess(self, image):
         items = AlignerPreprocessor.detector(image, self.scale)
         result = []
         for item in items:
             rect = item.rect
-            aligned = AlignerPreprocessor.aligner.align(299, image, rect,
+            aligned = AlignerPreprocessor.aligner.align(self.size, image, rect,
                                                         landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
             result.append((aligned, rect))
         return result
@@ -44,7 +45,7 @@ class AlignerPreprocessor(Preprocessor):
         def preprocess_single(image):
             image = cv2.imread(image)
             rect = AlignerPreprocessor.detector(image, self.scale)[0].rect
-            return AlignerPreprocessor.aligner.align(299, image, rect,
+            return AlignerPreprocessor.aligner.align(self.size, image, rect,
                                                      landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
 
         try:

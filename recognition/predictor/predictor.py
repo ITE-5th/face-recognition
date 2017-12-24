@@ -12,21 +12,20 @@ from recognition.pretrained.extractors import vgg_extractor
 
 
 class Predictor(metaclass=ABCMeta):
-    scale = 1
-    preprocessor = AlignerPreprocessor(scale)
     extractor = vgg_extractor()
 
-    def __init__(self, use_custom: bool = True, use_cuda: bool = True):
+    def __init__(self, use_custom: bool = True, use_cuda: bool = True, scale:int = 0):
         self.use_cuda = use_cuda
         self.names = sorted(
             os.listdir(FilePathManager.load_path("data/{}".format("custom_images2" if use_custom else "lfw2"))))
+        self.preprocessor = AlignerPreprocessor(scale)
 
     def predict_from_path(self, image_path: str):
         return self.predict_from_image(cv2.imread(image_path))
 
     @abstractmethod
     def predict_from_image(self, image):
-        items = Predictor.preprocessor.preprocess(image)
+        items = self.preprocessor.preprocess(image)
         result = []
         for (face, rect) in items:
             face = cv2.resize(face, (224, 224))

@@ -111,14 +111,14 @@ if __name__ == '__main__':
         if just_train:
             print("number of training samples = {}".format(X.shape[0]))
             estimator = EVM()
-            params = {"tail": range(3, 13), "open_set_threshold": [0.2, 0.3, 0.4, 0.5],
+            params = {"tail": range(3, 13), "open_set_threshold": [0.4, 0.5],
                       "biased_distance": [0.5, 0.7]}
             grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
             grid.fit(X, y)
             best_estimator = grid.best_estimator_
         else:
             estimator = EVM()
-            params = {"tail": range(3, 10), "open_set_threshold": [0.2, 0.3, 0.4, 0.5], "biased_distance": [0.5, 0.7]}
+            params = {"tail": range(3, 10), "open_set_threshold": [0.4, 0.5], "biased_distance": [0.5, 0.7]}
             grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
             grid.fit(X_train, y_train)
             best_estimator = grid.best_estimator_

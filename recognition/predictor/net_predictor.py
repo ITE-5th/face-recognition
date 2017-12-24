@@ -6,8 +6,8 @@ from recognition.predictor.predictor import Predictor
 
 class NetPredictor(Predictor):
     def __init__(self, model_path: str, use_custom: bool = True, use_cuda: bool = True,
-                 highest_number: int = 1):
-        super().__init__(use_custom, use_cuda)
+                 highest_number: int = 1, scale = 0):
+        super().__init__(use_custom, use_cuda, scale)
         self.highest_number = highest_number
         state = torch.load(model_path)
         temp = state["state_dict"]

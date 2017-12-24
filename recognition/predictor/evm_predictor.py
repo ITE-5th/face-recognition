@@ -6,8 +6,8 @@ class EvmPredictor(Predictor):
 
     UNKNOWN = "Unknown"
 
-    def __init__(self, evm_model_path: str, use_custom: bool = True, use_cuda: bool = True):
-        super().__init__(use_custom, use_cuda)
+    def __init__(self, evm_model_path: str, use_custom: bool = True, use_cuda: bool = True, scale = 0):
+        super().__init__(use_custom, use_cuda, scale)
         self.evm = load(evm_model_path)
 
     def predict_from_image(self, image):
