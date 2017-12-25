@@ -6,9 +6,12 @@ from random import random as rand
 
 import cv2
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+import matplotlib.patches as patches
 from PyQt5 import QtCore, QtGui, uic, QtWidgets
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QFileSystemModel, QTreeView, QPushButton
+from PyQt5.QtWidgets import QFileSystemModel, QTreeView, QPushButton, QVBoxLayout
 
 from recognition.predictor.evm_predictor import EvmPredictor
 from util.file_path_manager import FilePathManager
@@ -39,15 +42,21 @@ class FilesTreeView(QtWidgets.QTreeView):
         self.func(event)
 
 
-
-
-
 class ImageWidget(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.raw_image = None
         self.image = None
+        self.predicted = []
+        self.figure = plt.figure()
+        self.canvas = FigureCanvas(self.figure)
+        self.toolbar = NavigationToolbar(self.canvas, self)
+        self.with_prop = True
+        vbox = QVBoxLayout(parent)
+        # vbox.addWidget(self.toolbar)
+        vbox.addWidget(self.canvas)
+        self.setLayout(vbox)
 
     def setImage(self, image, raw_image):
         self.image = image
@@ -56,12 +65,35 @@ class ImageWidget(QtWidgets.QWidget):
         self.setMinimumSize(sz)
         self.update()
 
+    def setPredicted(self, predicted):
+        self.predicted = predicted
+
     def paintEvent(self, event):
-        qp = QtGui.QPainter()
-        qp.begin(self)
-        if self.image:
-            qp.drawImage(QtCore.QPoint(0, 0), self.image)
-        qp.end()
+        if self.raw_image is None:
+            return
+        ax = self.figure.add_subplot(111)
+        ax.clear()
+        ax.cla()
+        ax.axis("off")
+        ax.imshow(self.raw_image)
+        if running:
+            self.predicted = []
+        if len(self.predicted) > 0:
+            for (name, rect, prop) in self.predicted:
+                name = name.replace("_", " ")
+                color = (rand(), rand(), rand())
+                x, y, w, h = rect.left(), rect.top(), rect.right() - rect.left(), rect.bottom() - rect.top()
+                rect = patches.Rectangle((x, y),
+                                         w,
+                                         h,
+                                         fill=False,
+                                         edgecolor=color,
+                                         linewidth=2.5)
+                ax.add_patch(rect)
+                ax.text(x + 15, y - 10,
+                        '{:s}\n{:.3f}%'.format(name, prop * 100) if self.with_prop else "{:s}".format(name),
+                        bbox=dict(facecolor=color, alpha=0.5), fontsize=9, color='white')
+        self.canvas.draw()
 
 
 class Ui(QtWidgets.QMainWindow, FormClass):
@@ -125,6 +157,9 @@ class Ui(QtWidgets.QMainWindow, FormClass):
 
     def show_boxes(self, image, predicted, video=False):
         if self.drawing_method == "matplotlib":
+            if video:
+                self.videoWidget.setPredicted(predicted)
+                return
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             plt.cla()
             plt.axis("off")
