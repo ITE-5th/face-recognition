@@ -5,9 +5,9 @@ import numpy as np
 # from numba import float_, int_, bool_
 from scipy.spatial.distance import cdist
 from sklearn.base import BaseEstimator
-from sklearn.datasets import load_digits, load_iris
+from sklearn.datasets import load_breast_cancer, load_iris, load_digits
 from sklearn.externals import joblib
-from sklearn.metrics import make_scorer, accuracy_score
+from sklearn.metrics import make_scorer, accuracy_score, f1_score
 from sklearn.model_selection import train_test_split, GridSearchCV
 
 
@@ -36,9 +36,7 @@ class EVM(BaseEstimator):
                  open_set_threshold: float = 0.5,
                  biased_distance: float = 0.5,
                  k: int = 5,
-                 redundancy_rate: float = 0,
-                 use_multithreading: bool = False,
-                 n_jobs: int = cpu_count()):
+                 redundancy_rate: float = 0):
         self.tail = tail
         self.biased_distance = biased_distance
         self.classes = {}
@@ -46,8 +44,6 @@ class EVM(BaseEstimator):
         self.open_set_threshold = open_set_threshold
         self.k = k
         self.redundancy_rate = redundancy_rate
-        self.use_multithreading = use_multithreading
-        self.n_jobs = n_jobs
 
     def fit(self, X, y):
         classes = np.unique(y)
@@ -71,12 +67,9 @@ class EVM(BaseEstimator):
         self._infer_classes(list(self.classes.keys()))
 
     def _infer_classes(self, indices):
-        with Pool(self.n_jobs) as p:
-            temp = p.map(self._infer_class, indices)
-            for i in range(len(temp)):
-                self.dists[indices[i]] = temp[i]
-            p.close()
-            p.join()
+        temp = [self._infer_class(i) for i in indices]
+        for i in range(len(temp)):
+            self.dists[indices[i]] = temp[i]
 
     def _infer_class(self, class_index):
         in_class = self.classes[class_index]
@@ -95,45 +88,29 @@ class EVM(BaseEstimator):
         return np.apply_along_axis(self._predict_row, 1, X)
 
     def _predict_row_generalized(self, row):
-        if self.use_multithreading:
-            with Pool(self.n_jobs) as p:
-                result = p.map(self._predict_class_generalized, [(row, key) for key in self.classes.keys()])
-                p.close()
-                p.join()
-            maxi = max(result, key=lambda x: x[0])
-            max_prop, max_class = maxi
-        else:
-            max_prop, max_class = -1, -1
-            for i in self.classes.keys():
-                clz, dist = self.classes[i], self.dists[i]
-                distances = np.linalg.norm(clz - row, axis=1, keepdims=True)
-                temp = [dist[j].w_score(distances[j]) for j in range(dist.shape[0])]
-                props = sorted(temp, reverse=True)[:self.k]
-                prop = sum(props) / self.k
-                if prop > max_prop:
-                    max_prop = prop
-                    max_class = i
+        max_prop, max_class = -1, -1
+        for i in self.classes.keys():
+            clz, dist = self.classes[i], self.dists[i]
+            distances = np.linalg.norm(clz - row, axis=1, keepdims=True)
+            temp = [dist[j].w_score(distances[j]) for j in range(dist.shape[0])]
+            props = sorted(temp, reverse=True)[:self.k]
+            prop = sum(props) / self.k
+            if prop > max_prop:
+                max_prop = prop
+                max_class = i
         # -1 if from another class
         return max_class if max_prop >= self.open_set_threshold else -1
 
     def _predict_row(self, row):
-        if self.use_multithreading:
-            with Pool(self.n_jobs) as p:
-                result = p.map(self._predict_class, [(row, key) for key in self.classes.keys()])
-                p.close()
-                p.join()
-            maxi = max(result, key=lambda x: x[0])
-            max_prop, max_class = maxi
-        else:
-            max_prop, max_class = -1, -1
-            for i in self.classes.keys():
-                clz, dist = self.classes[i], self.dists[i]
-                distances = np.linalg.norm(clz - row, axis=1, keepdims=True)
-                props = [dist[j].w_score(distances[j]) for j in range(dist.shape[0])]
-                prop = max(props)
-                if prop > max_prop:
-                    max_prop = prop
-                    max_class = i
+        max_prop, max_class = -1, -1
+        for i in self.classes.keys():
+            clz, dist = self.classes[i], self.dists[i]
+            distances = np.linalg.norm(clz - row, axis=1, keepdims=True)
+            props = [dist[j].w_score(distances[j]) for j in range(dist.shape[0])]
+            prop = max(props)
+            if prop > max_prop:
+                max_prop = prop
+                max_class = i
         # -1 if from another class
         return max_class if max_prop >= self.open_set_threshold else -1
 
@@ -150,23 +127,15 @@ class EVM(BaseEstimator):
         return np.apply_along_axis(self._predict_with_prob, 1, X)
 
     def _predict_with_prob(self, row):
-        if self.use_multithreading:
-            with Pool(self.n_jobs) as p:
-                result = p.map(self._predict_class, [(row, key) for key in self.classes.keys()])
-                p.close()
-                p.join()
-            maxi = max(result, key=lambda x: x[0])
-            max_prop, max_class = maxi
-        else:
-            max_prop, max_class = -1, -1
-            for i in self.classes.keys():
-                clz, dist = self.classes[i], self.dists[i]
-                distances = np.linalg.norm(clz - row, axis=1, keepdims=True)
-                props = [dist[j].w_score(distances[j]) for j in range(dist.shape[0])]
-                prop = max(props)
-                if prop > max_prop:
-                    max_prop = prop
-                    max_class = i
+        max_prop, max_class = -1, -1
+        for i in self.classes.keys():
+            clz, dist = self.classes[i], self.dists[i]
+            distances = np.linalg.norm(clz - row, axis=1, keepdims=True)
+            props = [dist[j].w_score(distances[j]) for j in range(dist.shape[0])]
+            prop = max(props)
+            if prop > max_prop:
+                max_prop = prop
+                max_class = i
         # -1 if from another class
         return (max_class, max_prop) if max_prop >= self.open_set_threshold else (-1, 1 - max_prop)
 
@@ -179,7 +148,7 @@ class EVM(BaseEstimator):
         return prop, class_index
 
     def _reduce(self):
-        with Pool(self.n_jobs) as p:
+        with Pool(cpu_count()) as p:
             p.map(self._reduce_class, self.classes.keys())
             p.close()
             p.join()
@@ -215,14 +184,14 @@ class EVM(BaseEstimator):
 
 
 if __name__ == '__main__':
-    iris = False
-    X, y = load_iris(return_X_y=True) if iris else load_digits(return_X_y=True)
+    X, y = load_digits(return_X_y=True)
+    # X, y = load_breast_cancer(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     print("number of training samples = {}, obviously choosing a small tail will yield a very bad result".format(
         X_train.shape[0]))
     estimator = EVM(tail=8, open_set_threshold=0)
-    params = {"tail": [400]}
-    grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
+    params = {"tail": range(500, 600, 10)}
+    grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score), n_jobs=-1)
     grid.fit(X_train, y_train)
     best_estimator = grid.best_estimator_
     predicted = best_estimator.predict(X_test)

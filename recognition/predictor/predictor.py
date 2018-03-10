@@ -27,10 +27,11 @@ class Predictor(metaclass=ABCMeta):
         items = self.preprocessor.preprocess(image)
         result = []
         for (face, rect) in items:
-            face = cv2.resize(face, (400, 400))
             face = cv2torch(face).float()
             face = face.unsqueeze(0)
             x = Variable(face.cuda())
             x = Predictor.extractor(x)
             result.append((x, rect))
         return result
+
+
