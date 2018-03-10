@@ -2,19 +2,18 @@ import os
 from abc import ABCMeta, abstractmethod
 
 import cv2
-import numpy as np
-import torch
+from dlt.util.misc import cv2torch
 from torch.autograd import Variable
 
-from util.file_path_manager import FilePathManager
 from recognition.preprocessing.aligner_preprocessor import AlignerPreprocessor
 from recognition.pretrained.extractors import vgg_extractor
+from util.file_path_manager import FilePathManager
 
 
 class Predictor(metaclass=ABCMeta):
     extractor = vgg_extractor()
 
-    def __init__(self, use_custom: bool = True, use_cuda: bool = True, scale:int = 0):
+    def __init__(self, use_custom: bool = True, use_cuda: bool = True, scale: int = 1):
         self.use_cuda = use_cuda
         self.names = sorted(
             os.listdir(FilePathManager.load_path("data/{}".format("custom_images2" if use_custom else "lfw2"))))
@@ -28,10 +27,8 @@ class Predictor(metaclass=ABCMeta):
         items = self.preprocessor.preprocess(image)
         result = []
         for (face, rect) in items:
-            face = cv2.resize(face, (224, 224))
-            face = np.swapaxes(face, 0, 2)
-            face = np.swapaxes(face, 1, 2)
-            face = torch.from_numpy(face).float()
+            face = cv2.resize(face, (400, 400))
+            face = cv2torch(face).float()
             face = face.unsqueeze(0)
             x = Variable(face.cuda())
             x = Predictor.extractor(x)
