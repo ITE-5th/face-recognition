@@ -4,18 +4,18 @@ from multiprocessing import cpu_count
 import numpy as np
 import torch
 import torch.nn as nn
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import make_scorer, accuracy_score
 from sklearn.model_selection import GridSearchCV, train_test_split
 from torch.autograd import Variable
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 
-from util.file_path_manager import FilePathManager
 from recognition.dataset.face_recognition_dataset import FaceRecognitionDataset
 from recognition.dataset.image_feature_extractor import ImageFeatureExtractor
 from recognition.estimator.evm import EVM
 from recognition.estimator.net import Net
-import random
+from util.file_path_manager import FilePathManager
 
 
 def save_checkpoint(state, epoch):
@@ -50,8 +50,8 @@ def split_data(data):
 if __name__ == '__main__':
 
     root_path = FilePathManager.load_path("data")
-    use_evm = True
-    if not use_evm:
+    type = "evm"
+    if type == "net":
         batch_size = 512
         faces = ImageFeatureExtractor.load(root_path)
         train, val = split_data(faces)
@@ -110,7 +110,8 @@ if __name__ == '__main__':
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=40)
         if just_train:
             print("number of training samples = {}".format(X.shape[0]))
-            estimator = EVM(tail=13, open_set_threshold=0.74, biased_distance=0.7)
+            estimator = EVM(tail=13, open_set_threshold=0.74,
+                            biased_distance=0.7) if type == "evm" else RandomForestClassifier(n_estimators=100)
             # params = {"tail": range(3, 13), "open_set_threshold": [0.4, 0.5], "biased_distance": [0.5, 0.7]}
             # grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
             # grid.fit(X, y)
@@ -118,16 +119,23 @@ if __name__ == '__main__':
             estimator.fit(X, y)
             best_estimator = estimator
         else:
-            estimator = EVM()
-            params = {"tail": range(3, 10), "open_set_threshold": [0.5], "biased_distance": [0.5, 0.7]}
+            estimator = EVM() if type == "evm" else RandomForestClassifier(n_estimators=100)
+            params = {"tail": range(3, 10), "open_set_threshold": [0.5],
+                      "biased_distance": [0.5, 0.7]} if type == "evm" \
+                else \
+                {
+                    'rf__n_estimators': [50, 100, 200],
+                    'rf__max_features': ['log2', 'sqrt', 0.8]
+
+                }
             grid = GridSearchCV(estimator, param_grid=params, scoring=make_scorer(accuracy_score))
             grid.fit(X_train, y_train)
             best_estimator = grid.best_estimator_
             predicted = best_estimator.predict(X_test)
             accuracy = (predicted == y_test).sum() * 100 / X_test.shape[0]
             print("best accuracy = {}".format(accuracy))
-        path = FilePathManager.load_path("models/evm")
+        path = FilePathManager.load_path(f"models/{type}")
         if not os.path.exists(path):
             os.makedirs(path)
-        path += "/evm.model"
+        path += f"/{type}.model"
         best_estimator.save(path)
