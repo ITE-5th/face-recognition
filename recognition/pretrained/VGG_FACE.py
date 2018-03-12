@@ -1,6 +1,8 @@
 from functools import reduce
 
+import torch
 import torch.nn as nn
+from torch.autograd import Variable
 
 
 class LambdaBase(nn.Sequential):
@@ -72,3 +74,6 @@ VGG_FACE = nn.Sequential(  # Sequential,
     nn.Sequential(Lambda(lambda x: x.view(1, -1) if 1 == len(x.size()) else x), nn.Linear(4096, 2622)),  # Linear,
     nn.Softmax(),
 )
+
+if __name__ == '__main__':
+    VGG_FACE.cuda().forward(Variable(torch.zeros(1, 3, 200, 200).cuda()))

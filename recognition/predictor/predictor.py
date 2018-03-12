@@ -7,7 +7,7 @@ from torch.autograd import Variable
 
 from recognition.preprocessing.aligner_preprocessor import AlignerPreprocessor
 from recognition.pretrained.extractors import vgg_extractor
-from util.file_path_manager import FilePathManager
+from file_path_manager import FilePathManager
 
 
 class Predictor(metaclass=ABCMeta):
@@ -27,9 +27,10 @@ class Predictor(metaclass=ABCMeta):
         items = self.preprocessor.preprocess(image)
         result = []
         for (face, rect) in items:
+            face = cv2.resize(face, (200, 200))
             face = cv2torch(face).float()
             face = face.unsqueeze(0)
-            x = Variable(face.cuda())
+            x = Variable(face).cuda()
             x = Predictor.extractor(x)
             result.append((x, rect))
         return result

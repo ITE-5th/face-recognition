@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 
-from util.file_path_manager import FilePathManager
+from file_path_manager import FilePathManager
 from recognition.pretrained.extractors import inception_extractor, vgg_extractor
 
 
@@ -35,7 +35,6 @@ class ImageFeatureExtractor:
                 image = image.view(-1).cpu()
                 res = (image.data, i)
                 temp = root_dir + ("/custom_features/" if not lfw else "/lfw_features/") + name + "/" + face[:face.rfind(".")] + ".features"
-                print(temp)
                 torch.save(res, temp)
 
     @staticmethod

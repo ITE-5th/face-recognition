@@ -5,9 +5,8 @@ import numpy as np
 # from numba import float_, int_, bool_
 from scipy.spatial.distance import cdist
 from sklearn.base import BaseEstimator
-from sklearn.datasets import load_breast_cancer, load_iris, load_digits
-from sklearn.externals import joblib
-from sklearn.metrics import make_scorer, accuracy_score, f1_score
+from sklearn.datasets import load_digits
+from sklearn.metrics import make_scorer, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
 
 
@@ -22,10 +21,6 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 #     ("classes", dict),
 #     ("dists", dict)
 # ]
-
-
-def load(model_path: str):
-    return joblib.load(model_path)
 
 
 # @jitclass(spec)
@@ -177,10 +172,6 @@ class EVM(BaseEstimator):
             len_s.pop(ind)
         self.classes[class_index], self.dists[class_index] = self.classes[class_index][indices], \
                                                              self.dists[class_index][indices]
-
-    def save(self, model_path: str):
-        with open(model_path, "w") as _:
-            joblib.dump(self, model_path)
 
 
 if __name__ == '__main__':

@@ -8,10 +8,11 @@ import cv2
 import matplotlib.pyplot as plt
 from PyQt5 import QtCore, QtGui, uic, QtWidgets
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QFileSystemModel, QTreeView, QPushButton
+from PyQt5.QtWidgets import QFileSystemModel
 
+from file_path_manager import FilePathManager
 from recognition.predictor.evm_predictor import EvmPredictor
-from util.file_path_manager import FilePathManager
+from recognition.predictor.sklearn_predictor import SkLearnPredictor
 
 FormClass = uic.loadUiType("ui.ui")[0]
 running = False
@@ -37,9 +38,6 @@ class FilesTreeView(QtWidgets.QTreeView):
 
     def keyPressEvent(self, event):
         self.func(event)
-
-
-
 
 
 class ImageWidget(QtWidgets.QWidget):
@@ -68,6 +66,7 @@ class Ui(QtWidgets.QMainWindow, FormClass):
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self, parent)
         self.setupUi(self)
+        type = "evm"
         self.root_path = FilePathManager.load_path("test_images")
         self.drawing_method = "matplotlib"
         self.with_prop = True
@@ -75,7 +74,10 @@ class Ui(QtWidgets.QMainWindow, FormClass):
         self.window_height = self.videoWidget.frameSize().height()
         self.filesTreeView = FilesTreeView(self.keyPressEvent, self.filesTreeView)
         self.videoWidget = ImageWidget(self.videoWidget)
-        self.predictor = EvmPredictor(FilePathManager.load_path("models/evm/evm.model"))
+        if type == "evm":
+            self.predictor = EvmPredictor(FilePathManager.load_path("recognition/models/evm.model"))
+        else:
+            self.predictor = SkLearnPredictor(type)
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_frame)
         self.timer.start(1)

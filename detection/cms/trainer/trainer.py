@@ -13,7 +13,7 @@ from detection.cms.estimator.faster_rcnn.fast_rcnn.config import cfg
 from detection.cms.estimator.temp_cms import CMSRCNN
 from detection.cms.transforms.mean_subtract_transform import MeanSubtract
 from detection.cms.transforms.scale_transform import Scale
-from util.file_path_manager import FilePathManager
+from file_path_manager import FilePathManager
 
 
 def save_checkpoint(state, epoch):

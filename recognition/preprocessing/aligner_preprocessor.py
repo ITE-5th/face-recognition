@@ -1,13 +1,12 @@
 import glob
 import os
-from multiprocessing import Pool, cpu_count
 
 import cv2
 import dlib
 import openface
 
-from util.file_path_manager import FilePathManager
 from recognition.preprocessing.preprocessor import Preprocessor
+from file_path_manager import FilePathManager
 
 
 class AlignerPreprocessor(Preprocessor):
@@ -17,7 +16,7 @@ class AlignerPreprocessor(Preprocessor):
     predictor = dlib.shape_predictor(path_to_pretrained_model)
     aligner = openface.AlignDlib(path_to_pretrained_model)
 
-    def __init__(self, scale: int = 1, size=400):
+    def __init__(self, scale: int = 1, size=200):
         self.lfw = None
         self.scale = scale
         self.size = size
@@ -29,36 +28,37 @@ class AlignerPreprocessor(Preprocessor):
             rect = item.rect
             aligned = AlignerPreprocessor.aligner.align(self.size, image, rect,
                                                         landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
+            cv2.imwrite(FilePathManager.load_path("test.jpg"), aligned)
             result.append((aligned, rect))
         return result
 
     def preprocess_faces(self, faces, lfw: bool = False):
         self.lfw = lfw
-        with Pool(cpu_count()) as p:
-            p.map(self.process_face, faces)
-            p.close()
-            p.join()
+        for face in faces:
+            self.process_face(face)
+
+    def preprocess_face(self, image):
+        image = cv2.imread(image)
+        rect = AlignerPreprocessor.detector(image, self.scale)[0].rect
+        temp = AlignerPreprocessor.aligner.align(self.size, image, rect,
+                                                 landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
+        return temp
 
     def process_face(self, face):
         ind = face.index("lfw" if self.lfw else "custom_images") + (len("lfw") if self.lfw else len("custom_images"))
-
-        def preprocess_single(image):
-            image = cv2.imread(image)
-            rect = AlignerPreprocessor.detector(image, self.scale)[0].rect
-            return AlignerPreprocessor.aligner.align(self.size, image, rect,
-                                                     landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
-
         try:
-            aligned = preprocess_single(face)
+            aligned = self.preprocess_face(face)
             temp = face[:ind] + "2" + face[ind:]
             dirname = temp[:temp.rfind("/")]
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
             cv2.imwrite(temp, aligned)
+            del aligned
             print("correct : {}".format(face))
 
-        except:
+        except Exception as e:
             print("wrong : {}".format(face))
+            print(e)
 
 
 if __name__ == '__main__':

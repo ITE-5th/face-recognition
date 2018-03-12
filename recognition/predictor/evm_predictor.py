@@ -1,6 +1,6 @@
-from recognition.estimator.evm import load
+import joblib
 from recognition.predictor.predictor import Predictor
-from util.file_path_manager import FilePathManager
+from file_path_manager import FilePathManager
 
 
 class EvmPredictor(Predictor):
@@ -8,7 +8,7 @@ class EvmPredictor(Predictor):
 
     def __init__(self, evm_model_path: str, use_custom: bool = True, use_cuda: bool = True, scale=0):
         super().__init__(use_custom, use_cuda, scale)
-        self.evm = load(evm_model_path)
+        self.evm = joblib.load(evm_model_path)
 
     def predict_from_image(self, image):
         items = super().predict_from_image(image)
