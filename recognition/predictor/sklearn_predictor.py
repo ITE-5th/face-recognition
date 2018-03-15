@@ -10,7 +10,7 @@ class SkLearnPredictor(Predictor):
 
     def __init__(self, model_name: str, use_custom: bool = True, use_cuda: bool = True, scale=0):
         super().__init__(use_custom, use_cuda, scale)
-        self.model = load(FilePathManager.load_path(f"recognition/models/{model_name}.model"))
+        self.model = load(FilePathManager.resolve(f"recognition/models/{model_name}.model"))
 
     def predict_from_image(self, image):
         items = super().predict_from_image(image)

@@ -10,20 +10,20 @@ from recognition.dataset.image_feature_extractor import ImageFeatureExtractor
 from recognition.estimator.evm import EVM
 
 if __name__ == '__main__':
-    root_path = FilePathManager.load_path("data")
+    root_path = FilePathManager.resolve("data")
     just_train = False
     features = ImageFeatureExtractor.load(root_path)
     X, y = zip(*features)
     X, y = np.array([x.float().numpy() for x in X]), np.array(y)
-    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=40)
     type = "evm"
     estimator, params = None, {}
     if type == "evm":
         estimator = EVM()
         params = {
-            "tail": range(7, 9),
+            "tail": range(7, 15),
             "open_set_threshold": [0.4, 0.5],
-            "biased_distance": [0.5, 0.6]
+            "biased_distance": [0.5, 0.6, 0.7]
         }
     elif type == "forest":
         estimator = RandomForestClassifier()
@@ -45,5 +45,5 @@ if __name__ == '__main__':
     predicted = best_estimator.predict(X_test)
     accuracy = (predicted == y_test).sum() * 100 / X_test.shape[0]
     print("best accuracy = {}".format(accuracy))
-    path = FilePathManager.load_path(f"recognition/models/{type}.model")
+    path = FilePathManager.resolve(f"recognition/models/{type}.model")
     joblib.dump(best_estimator, path)

@@ -2,12 +2,8 @@
 
 data
 recognition/models
-recognition/checkpoint.pth.tar
 .idea
-
-# Pycharm
-.idea/workspace.xml
-.idea/tasks.xml
+test.jpg
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -75,7 +71,6 @@ unused/
 CMS/vgg-face-download.py
 Excluded Data/
 CMS/main.py
-/recognition/models/
 CMS/csv_to_json.py
 !/CMS/data/wider_face_split/wider_face_train_bbx_gt.json
 CMS/faster_rcnn/rpn_msr/proposal_target_layer1.py.bak

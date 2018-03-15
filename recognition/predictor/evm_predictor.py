@@ -22,6 +22,6 @@ class EvmPredictor(Predictor):
 
 
 if __name__ == '__main__':
-    path = FilePathManager.load_path("models/evm/evm.model")
+    path = FilePathManager.resolve("models/evm/evm.model")
     evm = EvmPredictor(path)
-    evm.predict_from_path(FilePathManager.load_path("test_images/image_1.jpg"))
+    evm.predict_from_path(FilePathManager.resolve("test_images/image_1.jpg"))

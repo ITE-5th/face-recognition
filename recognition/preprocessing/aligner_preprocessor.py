@@ -10,11 +10,10 @@ from file_path_manager import FilePathManager
 
 
 class AlignerPreprocessor(Preprocessor):
-    path_to_pretrained_model = FilePathManager.load_path("data/shape_predictor_68_face_landmarks.dat")
-    path_to_cnn_model = FilePathManager.load_path("data/cmsrcnn_face_detector")
-    detector = FilePathManager.load_detection_model()
-    predictor = dlib.shape_predictor(path_to_pretrained_model)
-    aligner = openface.AlignDlib(path_to_pretrained_model)
+    path_to_landmarks_model = FilePathManager.resolve("data/shape_predictor_68_face_landmarks.dat")
+    detector = dlib.cnn_face_detection_model_v1(FilePathManager.resolve("data/mmod_human_face_detector.dat"))
+    predictor = dlib.shape_predictor(path_to_landmarks_model)
+    aligner = openface.AlignDlib(path_to_landmarks_model)
 
     def __init__(self, scale: int = 1, size=200):
         self.lfw = None
@@ -28,7 +27,7 @@ class AlignerPreprocessor(Preprocessor):
             rect = item.rect
             aligned = AlignerPreprocessor.aligner.align(self.size, image, rect,
                                                         landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
-            cv2.imwrite(FilePathManager.load_path("test.jpg"), aligned)
+            cv2.imwrite(FilePathManager.resolve("test.jpg"), aligned)
             result.append((aligned, rect))
         return result
 
@@ -62,6 +61,6 @@ class AlignerPreprocessor(Preprocessor):
 
 
 if __name__ == '__main__':
-    faces = sorted(glob.glob(FilePathManager.load_path("data/custom_images/**/*")))
+    faces = sorted(glob.glob(FilePathManager.resolve("data/custom_images/**/*")))
     p = AlignerPreprocessor(scale=1)
     p.preprocess_faces(faces)

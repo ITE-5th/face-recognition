@@ -44,4 +44,4 @@ class ImageFeatureExtractor:
 
 
 if __name__ == '__main__':
-    ImageFeatureExtractor.extract(FilePathManager.load_path("data"), vgg_face=True)
+    ImageFeatureExtractor.extract(FilePathManager.resolve("data"), vgg_face=True)

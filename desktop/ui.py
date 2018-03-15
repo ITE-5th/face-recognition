@@ -67,7 +67,7 @@ class Ui(QtWidgets.QMainWindow, FormClass):
         QtWidgets.QMainWindow.__init__(self, parent)
         self.setupUi(self)
         type = "evm"
-        self.root_path = FilePathManager.load_path("test_images")
+        self.root_path = FilePathManager.resolve("test_images")
         self.drawing_method = "matplotlib"
         self.with_prop = True
         self.window_width = self.videoWidget.frameSize().width()
@@ -75,7 +75,7 @@ class Ui(QtWidgets.QMainWindow, FormClass):
         self.filesTreeView = FilesTreeView(self.keyPressEvent, self.filesTreeView)
         self.videoWidget = ImageWidget(self.videoWidget)
         if type == "evm":
-            self.predictor = EvmPredictor(FilePathManager.load_path("recognition/models/evm.model"))
+            self.predictor = EvmPredictor(FilePathManager.resolve("recognition/models/evm.model"))
         else:
             self.predictor = SkLearnPredictor(type)
         self.timer = QtCore.QTimer(self)

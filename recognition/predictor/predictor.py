@@ -16,7 +16,7 @@ class Predictor(metaclass=ABCMeta):
     def __init__(self, use_custom: bool = True, use_cuda: bool = True, scale: int = 1):
         self.use_cuda = use_cuda
         self.names = sorted(
-            os.listdir(FilePathManager.load_path("data/{}".format("custom_images2" if use_custom else "lfw2"))))
+            os.listdir(FilePathManager.resolve("data/{}".format("custom_images2" if use_custom else "lfw2"))))
         self.preprocessor = AlignerPreprocessor(scale)
 
     def predict_from_path(self, image_path: str):

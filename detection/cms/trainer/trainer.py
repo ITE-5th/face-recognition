@@ -17,7 +17,7 @@ from file_path_manager import FilePathManager
 
 
 def save_checkpoint(state, epoch):
-    torch.save(state, FilePathManager.load_path("detection/cms/models/net/checkpoint-{}.pth.tar".format(epoch)))
+    torch.save(state, FilePathManager.resolve("detection/cms/models/net/checkpoint-{}.pth.tar".format(epoch)))
 
 
 def val_accuracy(dataloader, net):
