@@ -14,4 +14,4 @@ if __name__ == '__main__':
     p = AlignerPreprocessor(scale=1)
     p.preprocess_faces(faces)
     print("finish aligning")
-    ImageFeatureExtractor.extract(FilePathManager.resolve("data"), vgg_face=True)
+    ImageFeatureExtractor.extract(FilePathManager.resolve("data"))

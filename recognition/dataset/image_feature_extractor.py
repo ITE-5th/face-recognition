@@ -7,13 +7,13 @@ import torch
 from torch.autograd import Variable
 
 from file_path_manager import FilePathManager
-from recognition.pretrained.extractors import inception_extractor, vgg_extractor
+from recognition.extractor.extractors import vgg_extractor
 
 
 class ImageFeatureExtractor:
     @staticmethod
-    def extract(root_dir: str, vgg_face=False, lfw=False):
-        extractor = vgg_extractor() if vgg_face else inception_extractor()
+    def extract(root_dir: str, lfw=False):
+        extractor = vgg_extractor()
         names = sorted(os.listdir(root_dir + ("/lfw2" if lfw else "/custom_images2")))
         if not os.path.exists(root_dir + ("/custom_features" if not lfw else "/lfw_features")):
             os.makedirs(root_dir + ("/custom_features" if not lfw else "/lfw_features"))
@@ -26,8 +26,7 @@ class ImageFeatureExtractor:
             for face in faces:
                 p = path + "/" + face
                 image = cv2.imread(p)
-                if vgg_face:
-                    image = cv2.resize(image, (224, 224))
+                image = cv2.resize(image, (224, 224))
                 image = np.swapaxes(image, 0, 2)
                 image = np.swapaxes(image, 1, 2)
                 image = torch.from_numpy(image.astype(np.float)).float().unsqueeze(0).cuda()
@@ -44,4 +43,4 @@ class ImageFeatureExtractor:
 
 
 if __name__ == '__main__':
-    ImageFeatureExtractor.extract(FilePathManager.resolve("data"), vgg_face=True)
+    ImageFeatureExtractor.extract(FilePathManager.resolve("data"))

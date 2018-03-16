@@ -699,7 +699,7 @@ class CMSRCNN(nn.Module):
 
         return bboxes, b_bboxes
 
-    def load_pretrained(self, path="../pretrained/cms.pth"):
+    def load_pretrained(self, path="../extractor/cms.pth"):
         stats = torch.load(path)
         self.load_state_dict(stats)
 

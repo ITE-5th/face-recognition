@@ -12,6 +12,8 @@ from PyQt5.QtWidgets import QFileSystemModel
 
 from file_path_manager import FilePathManager
 from recognition.predictor.evm_predictor import EvmPredictor
+from recognition.predictor.openface_predictor import OpenfacePredictor
+from recognition.predictor.siamese_net_predictor import SiameseNetPredictor
 from recognition.predictor.sklearn_predictor import SkLearnPredictor
 
 FormClass = uic.loadUiType("ui.ui")[0]
@@ -66,7 +68,7 @@ class Ui(QtWidgets.QMainWindow, FormClass):
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self, parent)
         self.setupUi(self)
-        type = "evm"
+        type = "openface"
         self.root_path = FilePathManager.resolve("test_images")
         self.drawing_method = "matplotlib"
         self.with_prop = True
@@ -76,6 +78,10 @@ class Ui(QtWidgets.QMainWindow, FormClass):
         self.videoWidget = ImageWidget(self.videoWidget)
         if type == "evm":
             self.predictor = EvmPredictor(FilePathManager.resolve("recognition/models/evm.model"))
+        elif type == "siamese":
+            self.predictor = SiameseNetPredictor()
+        elif type == "openface":
+            self.predictor = OpenfacePredictor()
         else:
             self.predictor = SkLearnPredictor(type)
         self.timer = QtCore.QTimer(self)

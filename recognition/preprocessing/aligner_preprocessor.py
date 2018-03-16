@@ -15,7 +15,7 @@ class AlignerPreprocessor(Preprocessor):
     predictor = dlib.shape_predictor(path_to_landmarks_model)
     aligner = openface.AlignDlib(path_to_landmarks_model)
 
-    def __init__(self, scale: int = 1, size=200):
+    def __init__(self, scale: int = 1, size=224):
         self.lfw = None
         self.scale = scale
         self.size = size
@@ -27,7 +27,6 @@ class AlignerPreprocessor(Preprocessor):
             rect = item.rect
             aligned = AlignerPreprocessor.aligner.align(self.size, image, rect,
                                                         landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
-            cv2.imwrite(FilePathManager.resolve("test.jpg"), aligned)
             result.append((aligned, rect))
         return result
 

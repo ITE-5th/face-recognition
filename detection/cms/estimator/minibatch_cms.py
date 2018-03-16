@@ -627,10 +627,10 @@ class CMSRCNN(nn.Module):
 
         return bboxes, b_bboxes
 
-    def load_pretrained(self, path: str = "../pretrained/cms.pth"):
+    def load_pretrained(self, path: str = "../extractor/cms.pth"):
         self.load_state_dict(torch.load(path))
 
-    def load_faster_rcnn(self, path: str = '../pretrained/pretrained.pth'):
+    def load_faster_rcnn(self, path: str = '../extractor/extractor.pth'):
         rcnn = torch.load(path)
 
         self.seq1[0].weight = copy.deepcopy(rcnn[0].weight)
@@ -663,4 +663,4 @@ if __name__ == "__main__":
     net = CMSRCNN()
     net.load_faster_rcnn()
 
-    torch.save(net.state_dict(), '../pretrained/pretrained-cms.pth')
+    torch.save(net.state_dict(), '../extractor/extractor-cms.pth')

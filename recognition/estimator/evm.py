@@ -2,13 +2,13 @@ import libmr
 from multiprocessing import Pool, cpu_count
 
 import numpy as np
+import cupy as cp
 # from numba import float_, int_, bool_
 from scipy.spatial.distance import cdist
 from sklearn.base import BaseEstimator
 from sklearn.datasets import load_digits
 from sklearn.metrics import make_scorer, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
-
 
 # spec = [
 #     ('tail', int_),
@@ -31,7 +31,8 @@ class EVM(BaseEstimator):
                  open_set_threshold: float = 0.5,
                  biased_distance: float = 0.5,
                  k: int = 5,
-                 redundancy_rate: float = 0):
+                 redundancy_rate: float = 0,
+                 use_gpu=False):
         self.tail = tail
         self.biased_distance = biased_distance
         self.classes = {}
@@ -39,6 +40,7 @@ class EVM(BaseEstimator):
         self.open_set_threshold = open_set_threshold
         self.k = k
         self.redundancy_rate = redundancy_rate
+        self.use_gpu = use_gpu
 
     def fit(self, X, y):
         classes = np.unique(y)
@@ -143,10 +145,8 @@ class EVM(BaseEstimator):
         return prop, class_index
 
     def _reduce(self):
-        with Pool(cpu_count()) as p:
-            p.map(self._reduce_class, self.classes.keys())
-            p.close()
-            p.join()
+        for i in self.classes.keys():
+            self._reduce_class(i)
 
     def _reduce_class(self, class_index):
         clz, dist = self.classes[class_index], self.dists[class_index]

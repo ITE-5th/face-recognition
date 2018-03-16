@@ -1,5 +1,4 @@
 from joblib import load
-from sklearn.ensemble import RandomForestClassifier
 
 from file_path_manager import FilePathManager
 from recognition.predictor.predictor import Predictor
@@ -8,7 +7,7 @@ from recognition.predictor.predictor import Predictor
 class SkLearnPredictor(Predictor):
     UNKNOWN = "Unknown"
 
-    def __init__(self, model_name: str, use_custom: bool = True, use_cuda: bool = True, scale=0):
+    def __init__(self, model_name: str, use_custom: bool = True, use_cuda: bool = True, scale=1):
         super().__init__(use_custom, use_cuda, scale)
         self.model = load(FilePathManager.resolve(f"recognition/models/{model_name}.model"))
 

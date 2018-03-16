@@ -5,19 +5,24 @@ import cv2
 from dlt.util.misc import cv2torch
 from torch.autograd import Variable
 
-from recognition.preprocessing.aligner_preprocessor import AlignerPreprocessor
-from recognition.pretrained.extractors import vgg_extractor
 from file_path_manager import FilePathManager
+from recognition.extractor.extractors import vgg_extractor
+from recognition.preprocessing.aligner_preprocessor import AlignerPreprocessor
 
 
 class Predictor(metaclass=ABCMeta):
-    extractor = vgg_extractor()
+    UNKNOWN = "Unknown"
 
-    def __init__(self, use_custom: bool = True, use_cuda: bool = True, scale: int = 1):
+    def __init__(self, use_custom: bool = True,
+                 use_cuda: bool = True,
+                 scale: int = 1,
+                 siamese: bool = False):
         self.use_cuda = use_cuda
         self.names = sorted(
-            os.listdir(FilePathManager.resolve("data/{}".format("custom_images2" if use_custom else "lfw2"))))
+            os.listdir(FilePathManager.resolve("data/{}".format("custom_images" if use_custom else "lfw2"))))
+        print(self.names)
         self.preprocessor = AlignerPreprocessor(scale)
+        self.extractor = vgg_extractor(siamese)
 
     def predict_from_path(self, image_path: str):
         return self.predict_from_image(cv2.imread(image_path))
@@ -31,8 +36,6 @@ class Predictor(metaclass=ABCMeta):
             face = cv2torch(face).float()
             face = face.unsqueeze(0)
             x = Variable(face).cuda()
-            x = Predictor.extractor(x)
+            x = self.extractor(x)
             result.append((x, rect))
         return result
-
-

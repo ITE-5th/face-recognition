@@ -4,9 +4,8 @@ from file_path_manager import FilePathManager
 
 
 class EvmPredictor(Predictor):
-    UNKNOWN = "Unknown"
 
-    def __init__(self, evm_model_path: str, use_custom: bool = True, use_cuda: bool = True, scale=0):
+    def __init__(self, evm_model_path: str, use_custom: bool = True, use_cuda: bool = True, scale=1):
         super().__init__(use_custom, use_cuda, scale)
         self.evm = joblib.load(evm_model_path)
 
@@ -17,7 +16,7 @@ class EvmPredictor(Predictor):
             x = face.data.cpu().numpy().reshape(1, -1)
             predicted = self.evm.predict_with_prop(x)
             clz, prop = predicted[0]
-            result.append((self.names[int(clz)] if clz != -1 else EvmPredictor.UNKNOWN, rect, prop))
+            result.append((self.names[int(clz)] if clz != -1 else Predictor.UNKNOWN, rect, prop))
         return result
 
 

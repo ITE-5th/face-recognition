@@ -32,7 +32,7 @@ class LambdaReduce(LambdaBase):
         return reduce(self.lambda_func, self.forward_prepare(input))
 
 
-VGG_FACE = nn.Sequential(  # Sequential,
+vgg_face = nn.Sequential(  # Sequential,
     nn.Conv2d(3, 64, (3, 3), (1, 1), (1, 1)),
     nn.ReLU(),
     nn.Conv2d(64, 64, (3, 3), (1, 1), (1, 1)),
@@ -76,4 +76,4 @@ VGG_FACE = nn.Sequential(  # Sequential,
 )
 
 if __name__ == '__main__':
-    VGG_FACE.cuda().forward(Variable(torch.zeros(1, 3, 200, 200).cuda()))
+    vgg_face.cuda().forward(Variable(torch.zeros(1, 3, 200, 200).cuda()))
