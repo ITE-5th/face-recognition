@@ -5,8 +5,8 @@ from file_path_manager import FilePathManager
 
 class EvmPredictor(Predictor):
 
-    def __init__(self, evm_model_path: str, use_custom: bool = True, use_cuda: bool = True, scale=1):
-        super().__init__(use_custom, use_cuda, scale)
+    def __init__(self, evm_model_path: str, use_cuda: bool = True, scale=1):
+        super().__init__(use_cuda=use_cuda, scale=scale)
         self.evm = joblib.load(evm_model_path)
 
     def predict_from_image(self, image):

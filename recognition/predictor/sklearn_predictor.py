@@ -7,8 +7,8 @@ from recognition.predictor.predictor import Predictor
 class SkLearnPredictor(Predictor):
     UNKNOWN = "Unknown"
 
-    def __init__(self, model_name: str, use_custom: bool = True, use_cuda: bool = True, scale=1):
-        super().__init__(use_custom, use_cuda, scale)
+    def __init__(self, model_name: str, use_cuda: bool = True, scale=1):
+        super().__init__(use_cuda=use_cuda, scale=scale)
         self.model = load(FilePathManager.resolve(f"recognition/models/{model_name}.model"))
 
     def predict_from_image(self, image):

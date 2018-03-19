@@ -13,14 +13,12 @@ from recognition.preprocessing.aligner_preprocessor import AlignerPreprocessor
 class Predictor(metaclass=ABCMeta):
     UNKNOWN = "Unknown"
 
-    def __init__(self, use_custom: bool = True,
+    def __init__(self,
                  use_cuda: bool = True,
                  scale: int = 1,
                  siamese: bool = False):
         self.use_cuda = use_cuda
-        self.names = sorted(
-            os.listdir(FilePathManager.resolve("data/{}".format("custom_images" if use_custom else "lfw2"))))
-        print(self.names)
+        self.names = sorted(os.listdir(FilePathManager.resolve("data/{}".format("custom_images"))))
         self.preprocessor = AlignerPreprocessor(scale)
         self.extractor = vgg_extractor(siamese)
 

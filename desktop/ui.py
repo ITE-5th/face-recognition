@@ -68,10 +68,10 @@ class Ui(QtWidgets.QMainWindow, FormClass):
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self, parent)
         self.setupUi(self)
-        type = "openface"
+        type = "forest"
+        self.with_prop = False
         self.root_path = FilePathManager.resolve("test_images")
         self.drawing_method = "matplotlib"
-        self.with_prop = True
         self.window_width = self.videoWidget.frameSize().width()
         self.window_height = self.videoWidget.frameSize().height()
         self.filesTreeView = FilesTreeView(self.keyPressEvent, self.filesTreeView)
