@@ -16,7 +16,7 @@ if __name__ == '__main__':
     X, y = zip(*features)
     X, y = np.array([x.float().numpy() for x in X]), np.array(y)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=40)
-    type = "forest"
+    type = "evm"
     estimator, params = None, {}
     if type == "evm":
         estimator = EVM()

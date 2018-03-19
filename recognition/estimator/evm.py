@@ -1,14 +1,13 @@
 import libmr
-from multiprocessing import Pool, cpu_count
 
 import numpy as np
-import cupy as cp
 # from numba import float_, int_, bool_
 from scipy.spatial.distance import cdist
 from sklearn.base import BaseEstimator
 from sklearn.datasets import load_digits
 from sklearn.metrics import make_scorer, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
+
 
 # spec = [
 #     ('tail', int_),
@@ -44,21 +43,11 @@ class EVM(BaseEstimator):
 
     def fit(self, X, y):
         classes = np.unique(y)
-        self.classes = dict()
-        self.dists = dict()
         for clz in classes:
             self.classes[clz] = X[y == clz]
-        self._infer()
+        self._infer_classes(classes)
         if self.redundancy_rate > 0:
             self._reduce()
-
-    def fit_new_data(self, X, y):
-        values = np.unique(y)
-        classes = {}
-        for val in values:
-            classes[val] = X[y == val]
-            if val in self.classes.keys():
-                pass
 
     def _infer(self):
         self._infer_classes(list(self.classes.keys()))
@@ -176,7 +165,6 @@ class EVM(BaseEstimator):
 
 if __name__ == '__main__':
     X, y = load_digits(return_X_y=True)
-    # X, y = load_breast_cancer(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     print("number of training samples = {}, obviously choosing a small tail will yield a very bad result".format(
         X_train.shape[0]))
@@ -188,3 +176,5 @@ if __name__ == '__main__':
     predicted = best_estimator.predict(X_test)
     accuracy = (predicted == y_test).sum() * 100 / X_test.shape[0]
     print("best accuracy = {}".format(accuracy))
+
+

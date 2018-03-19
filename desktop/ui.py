@@ -68,7 +68,7 @@ class Ui(QtWidgets.QMainWindow, FormClass):
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self, parent)
         self.setupUi(self)
-        type = "forest"
+        type = "evm"
         self.with_prop = False
         self.root_path = FilePathManager.resolve("test_images")
         self.drawing_method = "matplotlib"
