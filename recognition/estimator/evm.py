@@ -49,6 +49,10 @@ class EVM(BaseEstimator):
         if self.redundancy_rate > 0:
             self._reduce()
 
+    def remove(self, clz):
+        self.classes.pop(clz)
+        self.dists.pop(clz)
+
     def _infer(self):
         self._infer_classes(list(self.classes.keys()))
 
