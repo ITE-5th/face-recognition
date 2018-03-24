@@ -16,22 +16,24 @@ def remove_net(state):
     return new_state
 
 
+extractor = vgg_face
+# if not siamese:
+state = torch.load(FilePathManager.resolve('data/VGG_FACE.pth'))
+extractor.load_state_dict(state)
+extractor = nn.Sequential(*list(extractor.children())[:-7])
+# else:
+#     state = torch.load(FilePathManager.resolve('data/VGG_FACE_MODIFIED.pth.tar'))
+#     extractor = nn.Sequential(*list(extractor.children())[:-1])
+#     state = state["state_dict"]
+#     state = remove_net(state)
+#     extractor.load_state_dict(state)
+for param in extractor.parameters():
+    param.requires_grad = False
+extractor.eval()
+extractor.cuda()
+
+
 def vgg_extractor(siamese: bool = False):
-    extractor = vgg_face
-    if not siamese:
-        state = torch.load(FilePathManager.resolve('data/VGG_FACE.pth'))
-        extractor.load_state_dict(state)
-        extractor = nn.Sequential(*list(extractor.children())[:-7])
-    else:
-        state = torch.load(FilePathManager.resolve('data/VGG_FACE_MODIFIED.pth.tar'))
-        extractor = nn.Sequential(*list(extractor.children())[:-1])
-        state = state["state_dict"]
-        state = remove_net(state)
-        extractor.load_state_dict(state)
-    for param in extractor.parameters():
-        param.requires_grad = False
-    extractor.eval()
-    extractor = extractor.cuda()
     return extractor
 
 

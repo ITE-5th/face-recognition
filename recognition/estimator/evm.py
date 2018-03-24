@@ -24,6 +24,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 
 # @jitclass(spec)
 class EVM(BaseEstimator):
+    UNKNOWN = "Unknown"
 
     def __init__(self,
                  tail: int = 10,
@@ -88,8 +89,7 @@ class EVM(BaseEstimator):
             if prop > max_prop:
                 max_prop = prop
                 max_class = i
-        # -1 if from another class
-        return max_class if max_prop >= self.open_set_threshold else -1
+        return max_class if max_prop >= self.open_set_threshold else EVM.UNKNOWN
 
     def _predict_row(self, row):
         max_prop, max_class = -1, -1
@@ -101,8 +101,7 @@ class EVM(BaseEstimator):
             if prop > max_prop:
                 max_prop = prop
                 max_class = i
-        # -1 if from another class
-        return max_class if max_prop >= self.open_set_threshold else -1
+        return max_class if max_prop >= self.open_set_threshold else EVM.UNKNOWN
 
     def _predict_class_generalized(self, item):
         row, class_index = item
@@ -126,8 +125,7 @@ class EVM(BaseEstimator):
             if prop > max_prop:
                 max_prop = prop
                 max_class = i
-        # -1 if from another class
-        return (max_class, max_prop) if max_prop >= self.open_set_threshold else (-1, 1 - max_prop)
+        return (max_class, max_prop) if max_prop >= self.open_set_threshold else (EVM.UNKNOWN, 1 - max_prop)
 
     def _predict_class(self, item):
         row, class_index = item

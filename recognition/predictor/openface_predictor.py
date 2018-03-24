@@ -19,7 +19,7 @@ class OpenfacePredictor(Predictor):
             temp = os.listdir(path)[0]
             temp = f"{path}/{temp}"
             face = cv2.imread(temp)
-            face = self.preprocessor.preprocess(face)[0][0]
+            face = self.preprocessor.preprocess_image(face)[0][0]
             t[clz] = self.net.forward(face).reshape(1, -1)
         self.classes = t
 

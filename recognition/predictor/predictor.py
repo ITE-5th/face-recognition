@@ -27,7 +27,7 @@ class Predictor(metaclass=ABCMeta):
 
     @abstractmethod
     def predict_from_image(self, image):
-        items = self.preprocessor.preprocess(image)
+        items = self.preprocessor.preprocess_image(image)
         result = []
         for (face, rect) in items:
             face = cv2.resize(face, (200, 200))
