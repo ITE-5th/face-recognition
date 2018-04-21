@@ -1,9 +1,8 @@
 # Project
 
 data
-recognition/models
+trained_models
 .idea
-test.jpg
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

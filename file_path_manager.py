@@ -1,3 +1,4 @@
+import glob
 import os
 
 
@@ -7,3 +8,10 @@ class FilePathManager:
     @staticmethod
     def resolve(path: str):
         return FilePathManager.root_path + path
+
+    @staticmethod
+    def clear_dir(path: str):
+        path = FilePathManager.resolve(path + "/*")
+        files = glob.glob(path)
+        for f in files:
+            os.remove(f)
