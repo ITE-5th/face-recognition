@@ -29,7 +29,7 @@ class DLibExtractor(BaseExtractor):
         for rect in rects:
             csses.append(_rect_to_css(rect))
         result = face_recognition.face_encodings(image, csses)
-        return np.array(result), image
+        return np.array(result), rects, image
 
 
 if __name__ == '__main__':

@@ -51,8 +51,8 @@ class SimilarityPredictor:
         return max_per if max_sim >= self.threshold else EVM.UNKNOWN, max_sim
 
     def predict_from_image(self, image):
-        faces = self.pipeline(image)[0]
-        return [self.detect(faces[i]) for i in range(faces.shape[0])]
+        faces, rects, _ = self.pipeline(image)
+        return [(*self.detect(faces[i]), rects[i]) for i in range(faces.shape[0])]
 
     def predict_from_path(self, path):
         return self.predict_from_image(cv2.imread(path))

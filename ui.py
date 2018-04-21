@@ -132,7 +132,7 @@ class Ui(QtWidgets.QMainWindow, FormClass):
             plt.cla()
             plt.axis("off")
             plt.imshow(image)
-            for (name, rect, prop) in predicted:
+            for (name, prop, rect) in predicted:
                 name = name.replace("_", " ")
                 color = (random(), random(), random())
                 x, y, w, h = rect.left(), rect.top(), rect.right() - rect.left(), rect.bottom() - rect.top()
@@ -150,7 +150,7 @@ class Ui(QtWidgets.QMainWindow, FormClass):
             plt.show()
         else:
             font_scale = 1
-            for (name, rect, prop) in predicted:
+            for (name, prop, rect) in predicted:
                 name = name.replace("_", " ")
                 color = (random() * 255, random() * 255, random() * 255)
                 x, y, w, h = rect.left(), rect.top(), rect.right() - rect.left(), rect.bottom() - rect.top()
