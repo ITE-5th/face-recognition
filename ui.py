@@ -2,6 +2,7 @@ import os
 import sys
 import threading
 from queue import Queue
+from random import random
 
 import cv2
 import matplotlib.pyplot as plt
@@ -14,7 +15,7 @@ from extractors.dlib_extractor import DLibExtractor
 from file_path_manager import FilePathManager
 from predictor.evm_predictor import EvmPredictor
 from predictor.similarity_predictor import SimilarityPredictor
-from random import random
+
 FormClass = uic.loadUiType("ui.ui")[0]
 running = False
 q = Queue()
