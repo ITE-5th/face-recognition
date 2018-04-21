@@ -14,7 +14,7 @@ from extractors.dlib_extractor import DLibExtractor
 from file_path_manager import FilePathManager
 from predictor.evm_predictor import EvmPredictor
 from predictor.similarity_predictor import SimilarityPredictor
-
+from random import random
 FormClass = uic.loadUiType("ui.ui")[0]
 running = False
 q = Queue()
@@ -134,7 +134,7 @@ class Ui(QtWidgets.QMainWindow, FormClass):
             plt.imshow(image)
             for (name, rect, prop) in predicted:
                 name = name.replace("_", " ")
-                color = (rand(), rand(), rand())
+                color = (random(), random(), random())
                 x, y, w, h = rect.left(), rect.top(), rect.right() - rect.left(), rect.bottom() - rect.top()
                 rect = plt.Rectangle((x, y),
                                      w,
@@ -152,7 +152,7 @@ class Ui(QtWidgets.QMainWindow, FormClass):
             font_scale = 1
             for (name, rect, prop) in predicted:
                 name = name.replace("_", " ")
-                color = (rand() * 255, rand() * 255, rand() * 255)
+                color = (random() * 255, random() * 255, random() * 255)
                 x, y, w, h = rect.left(), rect.top(), rect.right() - rect.left(), rect.bottom() - rect.top()
                 cv2.rectangle(image, (x, y), (x + w, y + h), color, 3)
                 cv2.putText(image,
