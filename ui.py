@@ -113,7 +113,7 @@ class Ui(QtWidgets.QMainWindow, FormClass):
                 predicted = self.predictor.predict_from_path(image_path)
                 image = cv2.imread(image_path)
                 self.show_boxes(image, predicted)
-                print(predicted)
+                # print(predicted)
             else:
                 if running:
                     running = False
